@@ -9,8 +9,8 @@ import os
 import json
 import requests
 import numpy as np
-import matplotlib.pyplot as plt
-%matplotlib inline
+#import matplotlib.pyplot as plt
+
 
 
 # Setting host name, port number, directory name and the static path. 
@@ -39,10 +39,10 @@ class MainPage(tornado.web.RequestHandler):
     def post(self):
         self.write('<html><head><h1> Tornado Obase Server </h1></head><br>'
                    '<body><h2> Example Usages </h2><br>'
-                   '<b> localhost:8880/customerInfo/110236 </b> <br>'
+                   '<b> 45.55.237.86:8880/customerInfo/110236 </b> <br>'
                    'Displays demographic information of customer with id = 110236 <br>'
                    'Some customer ids to use for customerInfo: 110236, 100240, 110236 <br><br>'
-                   '<b> localhost:8880/customerSale/991921217 </b> <br>'
+                   '<b> 45.55.237.86:8880/customerSale/991921217 </b> <br>'
                    'Displays heatmap of the sales of customer with id = 991921217 <br>'
                    'Some customer ids to use for customerSale: 991921217, 991464688, 99888001 <br>'
                    '</body></html>')
@@ -82,13 +82,13 @@ class CustomerSale(tornado.web.RequestHandler):
         global X
         SalesTensor = X[:,:,customerIndex]
         
-        plt.figure
-        plt.imshow(SalesTensor)
-        plt.savefig('./images/sale.png')
+       # plt.figure
+       # plt.imshow(SalesTensor)
+       # plt.savefig('./images/sale.png')
 
         self.write('<html>Customer Index: %d <br>'
-                   'Sale Matrix of Customer<br>'
-                   '<img src=\"/images/sale.png\"></body></html>' % customerIndex)
+                   'Sale Matrix of Customer<br>' % customerIndex)
+                  # '<img src=\"/images/sale.png\"></body></html>' % customerIndex)
 
 
 # The configuration of routes.
