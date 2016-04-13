@@ -42,9 +42,9 @@ class MainPage(tornado.web.RequestHandler):
                    '<b> 45.55.237.86:8880/customerInfo/110236 </b> <br>'
                    'Displays demographic information of customer with id = 110236 <br>'
                    'Some customer ids to use for customerInfo: 110236, 100240, 110236 <br><br>'
-                   '<b> 45.55.237.86:8880/customerSale/991921217 </b> <br>'
-                   'Displays heatmap of the sales of customer with id = 991921217 <br>'
-                   'Some customer ids to use for customerSale: 991921217, 991464688, 99888001 <br>'
+                   '<b> 45.55.237.86:8880/customerSale/99888001 </b> <br>'
+                   'Displays heatmap of the sales of customer with id = 99888001 <br>'
+                   'Some customer ids to use for customerSale: 99888001, 991921217 <br>'
                    '</body></html>')
        
 
@@ -87,8 +87,8 @@ class CustomerSale(tornado.web.RequestHandler):
        # plt.savefig('./images/sale.png')
 
         self.write('<html>Customer Index: %d <br>'
-                   'Sale Matrix of Customer<br>' % customerIndex)
-                  # '<img src=\"/images/sale.png\"></body></html>' % customerIndex)
+                   'Sale Matrix of Customer<br>' 
+                   '<img src=\"/images/%d.png\"></body></html>' % (customerIndex,customerIndex))
 
 
 # The configuration of routes.
