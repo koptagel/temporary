@@ -51,16 +51,7 @@ def clearIrrelevantKeys(dictionary):
     return dictionary
 
 
-def loadFundamentalTensor(filename):
-    '''
-    Load the tensor from a mat file
-    In the mat file, the tensor is stored as a dictionary. 
-    Each dictionary key corresponds to a customer. 
-    Value corrseponding to each key is a scipy.sparse matrix, not a tensor. 
-    In this function, we convert the dictionary to a tensor with dimensions 
-    (numWeek x numDow x numHour x numItem x numCustomer). Note that this tensor is not sparse.
-    '''
-    
+def loadFundamentalTensorCustomer(filename, customerIndex):
     tempX = sio.loadmat(filename)
 
     tempX = clearIrrelevantKeys(tempX)
@@ -68,10 +59,9 @@ def loadFundamentalTensor(filename):
     numOfCustomers = len(tempX)
     numAllHours, numItems = tempX['0'].shape
     
-    X = np.zeros((numAllHours,numItems,numOfCustomers))
+    X = np.zeros((numAllHours,numItems,1))
     
-    for idx in range(numOfCustomers):
-        X[:,:,idx] = tempX[str(idx)].todense()
+    X[:,:,0] = tempX[str(customerIndex)].todense()
     
     numDow = 7
     numHour = 16
@@ -80,9 +70,9 @@ def loadFundamentalTensor(filename):
     numDay = numAllHours//numHour
     numWeek = numDay//numDow
     
-    newX = np.reshape(X[0:numWeek*numDow*numHour,:,:],(numWeek,numDow,numHour,numItems,numOfCustomers))
+    newX = np.reshape(X[0:numWeek*numDow*numHour,:,:],(numWeek,numDow,numHour,numItems,1))
     
-    return newX, numWeek, numDow, numHour, numItems, numOfCustomers
+    return newX
 
 
 def collapseTensor(tensor, dimensions, function):
@@ -125,9 +115,6 @@ def collapseTensor(tensor, dimensions, function):
     return tensor
 
 
-global X
-X,_,_,_,_,_ = loadFundamentalTensorCustomer('files/AllHours_Item_Customer_Tensor.mat', customerIndex)
-X = collapseTensor(X, [1,0,0,1,0], 'sum')
 
 ############
 
@@ -178,8 +165,8 @@ class CustomerSale(tornado.web.RequestHandler):
         #SalesTensor = loadFundamentalTensorCustomer('matfiles/AllHours_Item_Customer_Tensor.mat', customerIndex)
         #SalesTensor = collapseTensor(SalesTensor, [1,0,0,1,0], 'sum')
         
-        global X
-        SalesTensor = X[0,:,:,0,customerIndex]
+        X,_,_,_,_,_ = loadFundamentalTensorCustomer('files/AllHours_Item_Customer_Tensor.mat', customerIndex)
+        SalesTensor = collapseTensor(X, [1,0,0,1,0], 'sum')
         
         #global X
         #SalesTensor = X[:,:,customerIndex]
