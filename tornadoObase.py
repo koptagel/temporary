@@ -88,7 +88,7 @@ class CustomerSale(tornado.web.RequestHandler):
 
         self.write('<html>Customer Index: %d <br>'
                    'Sale Matrix of Customer<br>' 
-                   '<img src=\"/images/%d.png\"></body></html>' % (customerIndex,customerIndex))
+                   '<img src=\"/files/%d.png\"></body></html>' % (customerIndex,customerIndex))
 
 
 # The configuration of routes.
