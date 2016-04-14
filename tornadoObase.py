@@ -131,7 +131,7 @@ class MainPage(tornado.web.RequestHandler):
                    'Some customer ids to use for customerInfo: 110236, 100240, 110236 <br><br>'
                    '<b> 45.55.237.86:8880/customerSale/99888001 </b> <br>'
                    'Displays heatmap of the sales of customer with id = 99888001 <br>'
-                   'Some customer ids to use for customerSale: 99888001, 991921217 <br>'
+                   'Some customer ids to use for customerSale: 99888001, 991921217, 99958429 <br>'
                    '</body></html>')
        
 
@@ -165,19 +165,20 @@ class CustomerSale(tornado.web.RequestHandler):
         #SalesTensor = loadFundamentalTensorCustomer('matfiles/AllHours_Item_Customer_Tensor.mat', customerIndex)
         #SalesTensor = collapseTensor(SalesTensor, [1,0,0,1,0], 'sum')
         
-        X,_,_,_,_,_ = loadFundamentalTensorCustomer('files/AllHours_Item_Customer_Tensor.mat', customerIndex)
-        SalesTensor = collapseTensor(X, [1,0,0,1,0], 'sum')
-        
-        #global X
+        X = loadFundamentalTensorCustomer('files/AllHours_Item_Customer_Tensor.mat', customerIndex)
+        X = collapseTensor(X, [1,0,0,1,0], 'sum')
+        SalesTensor = X[0,:,:,0,0] 
+	
+	#global X
         #SalesTensor = X[:,:,customerIndex]
         
         plt.figure
-        plt.imshow(SalesTensor)
-        plt.savefig('./files/sale.png')
+        plt.imshow(SalesTensor, aspect='auto', interpolation='nearest',vmin=0, vmax=100)
+        plt.savefig('./files/%d.png' % customerId)
 
-        self.write('<html>Customer Index: %d <br>'
-                   'Sale Matrix of Customer<br>' 
-                   '<img src=\"/files/sale.png\"></body></html>' % (customerIndex))
+        self.write('<html>'
+                   'Sale Matrix of Customer %d <br>'
+                   '<img src=\"/files/%d.png\"></body></html>' % (customerId,customerId))
                    #'<img src=\"/files/%d.png\"></body></html>' % (customerIndex,customerIndex))
 
 
