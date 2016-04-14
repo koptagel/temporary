@@ -9,7 +9,11 @@ import os
 import json
 import requests
 import numpy as np
-#import matplotlib.pyplot as plt
+
+import matplotlib
+matplotlib.use('Agg')
+
+import matplotlib.pyplot as plt
 
 
 
@@ -27,8 +31,15 @@ selectedCustomerIndex2Id = np.loadtxt('files/customersIndex2Id.txt', dtype='int'
 
 # In later implementation, X will represent the sales tensor of all customers.
 # For now, it is randomly generated. 
+#global X
+#X = np.random.rand(10,20,30)
+
+%run loadFundamentalTensorCustomer.py
+%run collapseTensor.py
+
 global X
-X = np.random.rand(10,20,30)
+X = loadFundamentalTensorCustomer('files/AllHours_Item_Customer_Tensor.mat', customerIndex)
+X = collapseTensor(X, [1,0,0,1,0], 'sum')
 
 
 # Code segment that will bu used in the landing page. Gives examples of how-to-use the functionalities. 
@@ -77,18 +88,21 @@ class CustomerSale(tornado.web.RequestHandler):
         
         #SalesTensor = loadFundamentalTensorCustomer('matfiles/AllHours_Item_Customer_Tensor.mat', customerIndex)
         #SalesTensor = collapseTensor(SalesTensor, [1,0,0,1,0], 'sum')
-        #SalesTensor = SalesTensor[0,:,:,0,0]
         
         global X
-        SalesTensor = X[:,:,customerIndex]
+        SalesTensor = X[0,:,:,0,customerIndex]
         
-       # plt.figure
-       # plt.imshow(SalesTensor)
-       # plt.savefig('./images/sale.png')
+        #global X
+        #SalesTensor = X[:,:,customerIndex]
+        
+        plt.figure
+        plt.imshow(SalesTensor)
+        plt.savefig('./files/sale.png')
 
         self.write('<html>Customer Index: %d <br>'
                    'Sale Matrix of Customer<br>' 
-                   '<img src=\"/files/%d.png\"></body></html>' % (customerIndex,customerIndex))
+                   '<img src=\"/files/sale.png\"></body></html>' % (customerIndex))
+                   #'<img src=\"/files/%d.png\"></body></html>' % (customerIndex,customerIndex))
 
 
 # The configuration of routes.
