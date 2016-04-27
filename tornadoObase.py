@@ -180,7 +180,7 @@ class CustomerSale(tornado.web.RequestHandler):
                    'Sale Matrix of Customer %d <br>'
                    '<img src=\"/files/%d.png\"><br></body></html>' % (customerId,customerId))
         
-        imageUrl = ("%s:%s/files/%d.png" % (HOST,PORT,customerId))
+        imageUrl = ("45.55.237.86:%s/files/%d.png" % (PORT,customerId))
         
         info = json.dumps({"IdMusteri": customerId, "image_url": imageUrl})
         self.write("%s" % info)
@@ -202,12 +202,10 @@ class CustomerSaleJson(tornado.web.RequestHandler):
         plt.imshow(SalesTensor, aspect='auto', interpolation='nearest',vmin=0, vmax=100)
         plt.savefig('./files/%d.png' % customerId)
 
-        imageUrl = ("%s:%s/files/%d.png" % (HOST,PORT,customerId))
+        imageUrl = ("45.55.237.86:%s/files/%d.png" % (PORT,customerId))
         
         info = json.dumps({"IdMusteri": customerId, "image_url": imageUrl})
         self.write("%s" % info)
-        
-        self.write("%s" % STATIC_PATH)
         
             
 # The configuration of routes.
