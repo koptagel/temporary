@@ -206,6 +206,9 @@ class CustomerSaleJson(tornado.web.RequestHandler):
         
         info = json.dumps({"IdMusteri": customerId, "image_url": imageUrl})
         self.write("%s" % info)
+        
+        self.write("%s" % STATIC_PATH)
+        
             
 # The configuration of routes.
 routes_config = [
