@@ -133,7 +133,7 @@ class MainPage(tornado.web.RequestHandler):
                    'Displays heatmap of the sales of customer with id = 99888001 <br>'
                    'Some customer ids to use for customerSale: 99888001, 991921217, 99958429 <br><br>'
                    '<b> 45.55.237.86:8880/customerSaleJson/99888001 </b> <br>'
-                   'Displays the image url the sales matrix of customer with id = 99888001 in JSON format <br>'
+                   'Displays the image url of the sales matrix of customer with id = 99888001 in JSON format <br>'
                    'Some customer ids to use for customerSaleJson: 99888001, 991921217, 99958429 <br><br>'
                    '</body></html>')
         
