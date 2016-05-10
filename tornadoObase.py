@@ -1,4 +1,3 @@
-
 # %load tornadoObase.py
 
 # Including the required libraries .
@@ -441,9 +440,9 @@ class CustomerMap(tornado.web.RequestHandler):
         plt.figure
         plotTitle = "Sales of Customer %d" % customerId
         plotTensor(X, numPlots=1, title=plotTitle, vmax=plotMax, figsize=(8, 6))
-        plt.savefig('./files/%d.png' % customerId)
+        plt.savefig('./files/%d_%d_%d_%d.png' % (customerId,ax1,ax2,criteria))
 
-        imageUrl = ("45.55.237.86:%s/files/%d.png" % (PORT,customerId))
+        imageUrl = ("45.55.237.86:%s/files/%d_%d_%d_%d.png" % (PORT,customerId,ax1,ax2,criteria))
         
         info = json.dumps({"IdMusteri": customerId, "image_url": imageUrl})
         self.write("%s" % info)
