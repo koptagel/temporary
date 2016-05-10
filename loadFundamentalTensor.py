@@ -28,7 +28,7 @@ def clearIrrelevantKeys(dictionary):
     
     return dictionary
 
-def loadFundamentalTensor(filename):
+def loadFundamentalTensor(filename, numHour):
     '''
     Load the tensor from a mat file
     In the mat file, the tensor is stored as a dictionary. 
@@ -51,7 +51,6 @@ def loadFundamentalTensor(filename):
         X[:,:,idx] = tempX[str(idx)].todense()
     
     numDow = 7
-    numHour = 16
     
     # Find the number of days and the number of weeks the transactions are done
     numDay = numAllHours//numHour

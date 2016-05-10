@@ -1,4 +1,6 @@
 
+# %load tornadoObase.py
+
 # Including the required libraries .
 import tornado.ioloop
 import tornado.web
@@ -16,6 +18,7 @@ matplotlib.use('Agg')
 
 import matplotlib.pyplot as plt
 
+from plotTensor import plotTensor
 
 
 # Setting host name, port number, directory name and the static path. 
@@ -30,10 +33,20 @@ STATIC_PATH = os.path.join(DIRNAME, '.')
 global selectedCustomerIndex2Id
 selectedCustomerIndex2Id = np.loadtxt('files/customersIndex2Id.txt', dtype='int')
 
+global EtailerSelectedCustomerIndex2Id
+EtailerSelectedCustomerIndex2Id = np.loadtxt('files/Etailer_customersIndex2Id.txt', dtype='int')
+
 # In later implementation, X will represent the sales tensor of all customers.
 # For now, it is randomly generated. 
 #global X
 #X = np.random.rand(10,20,30)
+
+global profileList
+profileList = ["Keyifciler", "Tazeciler", "Bebekliler"]
+
+global productList 
+productList = ["Cips", "Fistik", "Kola"]
+
 
 
 #############
@@ -51,7 +64,30 @@ def clearIrrelevantKeys(dictionary):
     return dictionary
 
 
-def loadFundamentalTensorCustomer(filename, customerIndex):
+def loadFundamentalTensor(filename, numHour):
+    tempX = sio.loadmat(filename)
+
+    tempX = clearIrrelevantKeys(tempX)
+    
+    numOfCustomers = len(tempX)
+    numAllHours, numItems = tempX['0'].shape
+    
+    X = np.zeros((numAllHours,numItems,numOfCustomers))
+    
+    for idx in range(numOfCustomers):
+        X[:,:,idx] = tempX[str(idx)].todense()
+    
+    numDow = 7
+    
+    # Find the number of days and the number of weeks the transactions are done
+    numDay = numAllHours//numHour
+    numWeek = numDay//numDow
+    
+    newX = np.reshape(X[0:numWeek*numDow*numHour,:,:],(numWeek,numDow,numHour,numItems,numOfCustomers))
+    
+    return newX, numWeek, numDow, numHour, numItems, numOfCustomers
+
+def loadFundamentalTensorCustomer(filename, customerIndex, numHour):
     tempX = sio.loadmat(filename)
 
     tempX = clearIrrelevantKeys(tempX)
@@ -64,7 +100,6 @@ def loadFundamentalTensorCustomer(filename, customerIndex):
     X[:,:,0] = tempX[str(customerIndex)].todense()
     
     numDow = 7
-    numHour = 16
     
     # Find the number of days and the number of weeks the transactions are done
     numDay = numAllHours//numHour
@@ -104,12 +139,14 @@ def collapseTensor(tensor, dimensions, function):
         ax = indices[i]       
         
         if function is 'binary':
+            print("BINARY")
             tensor = np.sum(tensor, axis=ax, keepdims=True)
             tensor[np.where(tensor>0)]=1
         elif function is 'count':
             tensor[np.where(tensor>0)]=1
             tensor = np.sum(tensor, axis=ax, keepdims=True)
         else: # 'sum'
+            print("SUM")
             tensor = np.sum(tensor, axis=ax, keepdims=True)
 
     return tensor
@@ -126,6 +163,20 @@ class MainPage(tornado.web.RequestHandler):
     def post(self):
         self.write('<html><head><h1> Obase Tornado Server </h1></head><br>'
                    '<body><h2> Example Usages </h2><br>'
+                   'Last Update: 10.05.2016 <br><br>'
+                   '<b> 45.55.237.86:8880/customerList?pId=7&pId=100&pId=20 </b> <br>'
+                   'Given multiple product ids (i.e. Customer Profile), returns 10 users who are suitable for this profile in JSON Format. <br>'
+                   'JSON object has multilayer structure such as { "1":{ "Percentage": 100, "IdMusteri": 10271}, "2":{"Percentage": 90, "IdMusteri": 9327} } <br>'
+                   'The product ids and customer ids are generated synthetically.' 
+                   'This functionality will be updated in the following days for Obase Data. <br><br>'
+                   '<b> 45.55.237.86:8880/customerMap?IdMusteri=99737274&Axis1=1&Axis2=3&Type=2 </b> <br>'
+                   'Gives the image url of the sales matrix of customer with specified features. <br>'
+                   'Axis1 and Axis2 attributes represent the x and y axes of heatmap. The order is not important. <br>'
+                   'Axis1 and Axis2 can take values 0(Week), 1(Day of Week), 2(Hour) and 3(Item). <br>'
+                   'Type attribute can take the values 1 or 2. <br>'
+                   '1 represents the amount of money spent by the customer. ' 
+                   '2 is the binary representation of first type (i.e whether the customer buys an item on that day or not). <br>' 
+                   'Some customer ids to use for customerMap: 99888001, 991921217, 99958429 <br><br>'
                    '<b> 45.55.237.86:8880/customerInfo/110236 </b> <br>'
                    'Displays demographic information of customer with id = 110236 <br>'
                    'Some customer ids to use for customerInfo: 110236, 100240 <br><br>'
@@ -136,9 +187,8 @@ class MainPage(tornado.web.RequestHandler):
                    'Displays the image url of the sales matrix of customer with id = 99888001 in JSON format <br>'
                    'Some customer ids to use for customerSaleJson: 99888001, 991921217, 99958429 <br><br>'
                    '</body></html>')
-        
-        
 
+                
 # Code segment that will return customer demographic information as a JSON object. 
 # The customer id is given. 
 # From the api provided, the code segment executes query to get information and convert it to JSON format.
@@ -167,7 +217,7 @@ class CustomerSale(tornado.web.RequestHandler):
         customerId = int(parameter)
         customerIndex = np.where(selectedCustomerIndex2Id==customerId)[0][0]
         
-        X = loadFundamentalTensorCustomer('files/AllHours_Item_Customer_Tensor.mat', customerIndex)
+        X = loadFundamentalTensorCustomer('files/AllHours_Item_Customer_Tensor.mat', customerIndex, 16)
         X = collapseTensor(X, [1,0,0,1,0], 'sum')
         SalesTensor = X[0,:,:,0,0] 
         
@@ -185,6 +235,33 @@ class CustomerSale(tornado.web.RequestHandler):
         info = json.dumps({"IdMusteri": customerId, "image_url": imageUrl})
         self.write("%s" % info)
         
+class CustomerSaleEtailer(tornado.web.RequestHandler):
+    def get(self, parameter):
+        self.post(parameter)
+    
+    def post(self, parameter):
+        customerId = int(parameter)
+        customerIndex = np.where(EtailerSelectedCustomerIndex2Id==customerId)[0][0]
+        
+        X = loadFundamentalTensorCustomer('files/Etailer_AllHours_Item_Customer_Tensor.mat', customerIndex, 24)
+        X = collapseTensor(X, [1,0,0,1,0], 'sum')
+        SalesTensor = X[0,:,:,0,0] 
+        
+        plt.figure
+        plt.imshow(SalesTensor, aspect='auto', interpolation='nearest',vmin=0, vmax=100)
+        plt.savefig('./files/%d.png' % customerId)
+        
+
+        self.write('<html>'
+                   '%d <br>' 
+                   'Sale Matrix of Customer %d <br>'
+                   '<img src=\"/files/%d.png\"><br></body></html>' % (customerIndex,customerId,customerId))
+        
+        imageUrl = ("45.55.237.86:%s/files/%d.png" % (PORT,customerId))
+        
+        info = json.dumps({"IdMusteri": customerId, "image_url": imageUrl})
+        self.write("%s" % info)
+        
 # Given the customer id, this code segment get the sales matrix of the customer, saves it in .png format and displays the json. 
 class CustomerSaleJson(tornado.web.RequestHandler):
     def get(self, parameter):
@@ -194,7 +271,7 @@ class CustomerSaleJson(tornado.web.RequestHandler):
         customerId = int(parameter)
         customerIndex = np.where(selectedCustomerIndex2Id==customerId)[0][0]
         
-        X = loadFundamentalTensorCustomer('files/AllHours_Item_Customer_Tensor.mat', customerIndex)
+        X = loadFundamentalTensorCustomer('files/AllHours_Item_Customer_Tensor.mat', customerIndex, 16)
         X = collapseTensor(X, [1,0,0,1,0], 'sum')
         SalesTensor = X[0,:,:,0,0] 
         
@@ -206,14 +283,201 @@ class CustomerSaleJson(tornado.web.RequestHandler):
         
         info = json.dumps({"IdMusteri": customerId, "image_url": imageUrl})
         self.write("%s" % info)
+
+class DefineProfile(tornado.web.RequestHandler):
+    def get(self):
+        self.write('<html><head><h2> Profil Tanimlama Ekrani </h2></head><br>'
+                   '<body><form action="/defineProfile" method="post">'
+                   '<table border="1" width=100>'
+                   '<tr><td> <b> Profil Tanimla </b> </td></tr><br>'
+                   '<tr><td> <input type="text" name="profileName"> </td></tr><br>'
+                   '</table>'
+                   '<input type="submit" value="Ekle">'
+                   '</form></body></html>')
+
+    def post(self):
+        self.set_header("Content-Type", "text/plain")
+        self.write("En son eklenen profil: " + self.get_argument("profileName"))
+    
+        global profileList
+        profileList.append(self.get_argument("profileName"))
+
+def tag(attr='', **kwargs):
+    for tag, txt in kwargs.items():
+        return '<{tag}{attr}>{txt}</{tag}>'.format(**locals())
+
+def createProductsTable():
+    global productList
+
+    rows = '\n'.join(tag(tr=''.join(tag(td=productList[i])))
+                     for i in range(len(productList)))
+    
+    return(rows)
+
+def createProfilesList():
+    global productList
+
+    rows = '\n'.join( ('<option value="%s"> %s </option>' ) % (profileList[i],profileList[i])
+                     for i in range(len(profileList)))
+ 
+    return(rows)
+
+class DefineProducts(tornado.web.RequestHandler):
+    def get(self):
+        self.write('<html><head><h2> Urun Tanimlama Ekrani </h2></head><br>'
+                   '<body><form action="/defineProducts" method="post">'
+                   'Musteri Profilleri: <select name="profileName" size="1">')
         
+        profiles = createProfilesList()
+        self.write(profiles)
+                   
+        self.write('</select><br>'
+                   '<table border="1" width=150>'
+                   '<tr><td> <b> Urun Tanimla </b> </td></tr><br>')
+                   
+        products = createProductsTable()
+        self.write(products)
+        
+        self.write('</table><br>'
+                   '<input type="text" name="productName"> <input type="submit" value="Ekle"> '
+                   '</form></body></html>')
+
+        
+    def post(self):
+        #self.set_header("Content-Type", "text/plain")
+        #self.write("En son eklenen urun: " + self.get_argument("productName")) 
+        #self.write("Secilen profil: " + self.get_argument("profileName")) 
+        
+        global productList
+        productList.append(self.get_argument("productName"))
+        
+        self.get()
+          
             
+        
+class MidResults(tornado.web.RequestHandler):
+    def get(self):
+        self.write('<html><head><h2> Ara Sonuc Ekrani </h2></head><br>'
+                   '<body><form action="/midResults" method="post">'
+                   'Musteri Profilleri: <select name="profileName" size="1">')
+        
+        profiles = createProfilesList()
+        self.write(profiles)
+        
+        self.write('</select><br>'
+                   '<table border="1" width=250>'
+                   '<tr><td> <b> Musteri </b> </td> <td> <b> Profil Uygunlugu </b> </td> </tr><br>'
+                   '<tr><td> Musteri X </td> <td> %100 </td> </tr><br>'
+                   '<tr><td> Musteri Y </td> <td> %99 </td> </tr><br>'
+                   '<tr><td> Musteri Z </td> <td> %98 </td> </tr><br>'
+                   '<tr><td> Musteri T </td> <td> %97 </td> </tr><br>'
+                   '</table><br>'
+                   'Kriter: <select name="criteriaName" size="1">'
+                   '<option value="cName"> Haftanin Gunleri </option>'
+                   '<option value="cName"> Haftalik Harcama </option>'
+                   '<option value="cName"> Haftalik Urunler </option></select><br>'
+                   '<img src=\"/files/99888001.png\" height="300", width="400"><br>'
+                   '<input type="button" value="Benzerlerini Bul"></form></body></html>')
+
+    def post(self):
+        self.set_header("Content-Type", "text/plain")
+        self.write("En son secilen customer: " + self.get_argument("customerName"))     
+
+
+class CustomerListForProfile(tornado.web.RequestHandler):
+    def get(self, *args):
+        self.post(*args)
+
+    def post(self, *args):
+
+        productList = self.get_arguments('pId')
+        
+        numCustomers = 10
+        
+        percentages = np.random.randint(100, size=(numCustomers)) + 1
+        indices = np.argsort(percentages,axis=0)[::-1].flatten()
+        percentages = np.sort(percentages,axis=0)[::-1].flatten()
+
+        customerIds = np.random.randint(1000, size=(numCustomers)) + 1
+        customerIds = customerIds[indices]
+
+        data = {}
+        for i in range(numCustomers):
+            data2 = {}
+            data2['Percentage'] = int(percentages[i])
+            data2['IdMusteri'] = int(customerIds[i])
+            data[i+1] = data2 
+            
+        json_data = json.dumps(data, sort_keys=True)
+        self.write(json_data)
+
+class CustomerMap(tornado.web.RequestHandler):
+    def get(self, *args):
+        self.post(*args)
+    
+    def post(self, *args):
+        
+        customerId = int(self.get_argument('IdMusteri'))
+        customerIndex = np.where(selectedCustomerIndex2Id==customerId)[0][0]
+        
+        ax1 = int(self.get_argument('Axis1'))
+        ax2 = int(self.get_argument('Axis2'))
+        dimensions = np.array([1,1,1,1,0])
+        dimensions[ax1] = 0
+        dimensions[ax2] = 0
+
+        criteria = int(self.get_argument('Type'))
+        if criteria==1:
+            plotCriteria = 'sum'
+            plotMax = 10
+        else:
+            plotCriteria = 'binary'
+            plotMax = 1
+        
+        X = loadFundamentalTensorCustomer('files/AllHours_Item_Customer_Tensor.mat', customerIndex, 16)
+        #X = collapseTensor(X, [1,0,1,0,0], 'sum')
+        X = collapseTensor(X, dimensions, plotCriteria)
+        
+        plt.figure
+        plotTitle = "Sales of Customer %d" % customerId
+        plotTensor(X, numPlots=1, title=plotTitle, vmax=plotMax, figsize=(8, 6))
+        plt.savefig('./files/%d.png' % customerId)
+
+        imageUrl = ("45.55.237.86:%s/files/%d.png" % (PORT,customerId))
+        
+        info = json.dumps({"IdMusteri": customerId, "image_url": imageUrl})
+        self.write("%s" % info)
+        
+class set_params(tornado.web.RequestHandler):
+    def get(self, *args):
+        self.post(*args)
+
+    def post(self, *args):
+
+        Ntmp = self.get_arguments('N')
+        self.write(" N: ")
+        
+        for i in range(len(Ntmp)):
+            self.write(Ntmp[i])
+
+        tmp = int(self.get_argument('WF'))
+        self.write(" WF: ")
+        self.write("%d" % tmp) 
+        
+
 # The configuration of routes.
 routes_config = [
     (r"/", MainPage), 
     (r"/customerInfo/([^/]+)", CustomerInfo),
     (r"/customerSale/([^/]+)", CustomerSale),
+    (r"/customerSaleEtailer/([^/]+)", CustomerSaleEtailer),
     (r"/customerSaleJson/([^/]+)", CustomerSaleJson),
+    (r"/defineProfile", DefineProfile),
+    (r"/defineProducts", DefineProducts),
+    (r"/midResults", MidResults),
+    (r"/set_params", set_params),
+    (r"/customerList", CustomerListForProfile),
+    (r"/customerMap", CustomerMap),
     (r"/(.*\.png)", tornado.web.StaticFileHandler,{"path": "." }),
 ]
 application = tornado.web.Application(routes_config)
