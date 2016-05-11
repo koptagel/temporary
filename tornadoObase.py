@@ -138,14 +138,12 @@ def collapseTensor(tensor, dimensions, function):
         ax = indices[i]       
         
         if function is 'binary':
-            print("BINARY")
             tensor = np.sum(tensor, axis=ax, keepdims=True)
             tensor[np.where(tensor>0)]=1
         elif function is 'count':
             tensor[np.where(tensor>0)]=1
             tensor = np.sum(tensor, axis=ax, keepdims=True)
         else: # 'sum'
-            print("SUM")
             tensor = np.sum(tensor, axis=ax, keepdims=True)
 
     return tensor
@@ -160,9 +158,53 @@ class MainPage(tornado.web.RequestHandler):
         self.post()
         
     def post(self):
+        self.write('<html><head><h1> Obase Tornado Server </h1></head>'
+                   '<body> Son Guncelleme: 11.05.2016 <br><br>'
+                   '<h2> Genel Kullanim </h2>'
+                   '45.55.237.86:8880/<b>FonksiyonIsmi</b>?jsonData=<b>JsonInputu</b> <br><br>'
+                   'Asagida listelenen butun fonksiyonlarda veriler Json formatinda alinip, sonuclar Json formatinda geri dondurulecektir. <br>'
+                   '<b>FonksiyonIsmi</b> yazan yere asagida siralanan fonksiyonlardan birinin adinin yazilmasi gerekiyor. <br>'
+                   '<b>JsonInputu</b> yazan kisma ise verilerin Json formatinda girilmesi gerekiyor. <br><br>'
+                   'Her fonksiyon icin dikkat edilmesi gerekilen noktalar ve ornek kullanimlar ilerleyen kisimlarda gosterilmistir. <br>'
+                   'Ornek kullanimlardaki Json inputlari, fonksiyonlarin calisabilmesi icin gerekli olan temel yapiyi gostermektedir. <br>'
+                   'Bu temel yapiya ek olarak baska bilgiler de ayni Json inputunun icerisinde gonderilebilir. <br>'
+                   '<h2> Fonksiyonlar </h2>'
+                   '<h3> customersOfProfile </h3>'
+                   'Verilen urun listesine (kullanici profiline) gore, bu profile uyan ilk 10 musterinin idleri, isimleri ve profile olan uygunluklari listelenecektir. <br>'
+                   'Musteriler, profile uygunluklarina gore siralanmistir (yuksek yuzdeden dusuk yuzdeye gore). <br><br>'
+                   '<b> Input: </b> 45.55.237.86:8880/<b>customersOfProfile</b>?jsonData=<b>{"Products": [{"id": 165}, {"id": 529}]}</b> <br>'
+                   '<b> Output: </b> {"Customers": [{"percentage":98, "id": 123, "name": "Ahmet Yilmaz"}, {"percentage":80, "id": 201, "name": "Hande Ozturk"}, {"percentage":77, "id": 34, "name": "Elif Aras"}]} <br><br>'
+                   'Bu asamada sonuclar yapay olarak uretilmektedir. Fonksiyon yakinda gercek verilere gore guncellenecektir. <br><br>'
+                   '<h3> customerSaleMap </h3>'
+                   'Verilen musteri idsine ve istenilen grafik kriterlerine gore, musteri haritasinin url bilgisi dondurulur. <br><br>'
+                   'Grafik kriterlerinin alabilecegi degerler ve ifade ettikleri durumlar asagidaki tablolarda gosterilmistir. <br>'
+                   'X ve Y Duzlemleri:'
+                   '<table border="1" width=300>'
+                   '<tr><td> 0 </td><td> 1 </td><td> 2 </td><td> 3 </td></tr><br>'
+                   '<tr><td> Hafta </td><td> Haftanin Gunu </td><td> Saat </td><td> Urun </td></tr><br>'
+                   '</table>'
+                   'Type:'
+                   '<table border="1" width=400>'
+                   '<tr><td> 1 </td><td> 2 </td></tr><br>'
+                   '<tr><td> Satis Tutari </td><td> Satis yapilip yapilmadigi (0 veya 1 seklinde) </td></tr><br>'
+                   '</table> <br>'
+                   '<b> Input: </b> 45.55.237.86:8880/<b>customerSaleMap</b>?jsonData=<b>{"id": 991921217, "xAxis":0, "yAxis": 2, "type": 1} </b><br>'
+                   '<b> Output: </b> {"image_url": "45.55.237.86:8880/files/991921217_0_2_1.png"} <br>'
+                   'Bu ornekte 991921217 numarali musterinin haftalara ve saatlere gore yaptigi toplam harcama gosterilmektedir. <br><br>'
+                   'Ornek olarak kullanilabilecek musteri idleri: 99888001, 991921217, 99958429. <br><br>'
+                   'Bu asamada x ve y duzlemlerinin siralamalarinin bir onemi yoktur.'
+                   '</body></html>')
+        
+
+class MainPage2(tornado.web.RequestHandler):
+    def get(self):
+        self.post()
+        
+    def post(self):
         self.write('<html><head><h1> Obase Tornado Server </h1></head><br>'
                    '<body><h2> Example Usages </h2><br>'
-                   'Last Update: 10.05.2016 <br><br>'
+                   'Last Update: 11.05.2016 <br><br>'
+                   '<b> 45.55.237.86:8880/customersOfProfile?jsonData={"ClassId": 0, "ClassName": "Keyifciler", "Products": [{"id": 16540, "name": "ANTRIKOT"}, {"id": 5293, "name": "KAVURMA"}]} </b> <br>'
                    '<b> 45.55.237.86:8880/customerList?pId=7&pId=100&pId=20 </b> <br>'
                    'Given multiple product ids (i.e. Customer Profile), returns 10 users who are suitable for this profile in JSON Format. <br>'
                    'JSON object has multilayer structure such as { "1":{ "Percentage": 100, "IdMusteri": 10271}, "2":{"Percentage": 90, "IdMusteri": 9327} } <br>'
@@ -186,8 +228,8 @@ class MainPage(tornado.web.RequestHandler):
                    'Displays the image url of the sales matrix of customer with id = 99888001 in JSON format <br>'
                    'Some customer ids to use for customerSaleJson: 99888001, 991921217, 99958429 <br><br>'
                    '</body></html>')
-
-                
+   
+            
 # Code segment that will return customer demographic information as a JSON object. 
 # The customer id is given. 
 # From the api provided, the code segment executes query to get information and convert it to JSON format.
@@ -383,12 +425,43 @@ class MidResults(tornado.web.RequestHandler):
         self.write("En son secilen customer: " + self.get_argument("customerName"))     
 
 
+class CustomersOfProfile(tornado.web.RequestHandler):
+    def get(self, *args):
+        self.post(*args)
+
+    def post(self, *args):
+        temp = self.get_argument('jsonData')
+        profile_data = json.loads(temp)
+        
+        productList = profile_data['Products']
+        
+        numCustomers = 10
+        
+        percentages = np.random.randint(100, size=(numCustomers)) + 1
+        indices = np.argsort(percentages,axis=0)[::-1].flatten()
+        percentages = np.sort(percentages,axis=0)[::-1].flatten()
+
+        customerIds = np.random.randint(1000, size=(numCustomers)) + 1
+        customerIds = customerIds[indices]
+
+        data = []
+        for i in range(numCustomers):
+            data2 = {}
+            data2['percentage'] = int(percentages[i])
+            data2['id'] = int(customerIds[i])
+            data2['name'] = "Name Surname"
+            data.append(data2)
+            
+        json_data = json.dumps({"Customers": data})
+        self.write(json_data)      
+
+            
 class CustomerListForProfile(tornado.web.RequestHandler):
     def get(self, *args):
         self.post(*args)
 
     def post(self, *args):
-
+        
         productList = self.get_arguments('pId')
         
         numCustomers = 10
@@ -410,6 +483,48 @@ class CustomerListForProfile(tornado.web.RequestHandler):
         json_data = json.dumps(data, sort_keys=True)
         self.write(json_data)
 
+
+class CustomerSaleMap(tornado.web.RequestHandler):
+    def get(self, *args):
+        self.post(*args)
+        
+    def post(self, *args):
+        temp = self.get_argument('jsonData')
+        plot_data = json.loads(temp)
+        
+        customerId = int(plot_data['id'])
+        ax1 = int(plot_data['xAxis'])
+        ax2 = int(plot_data['yAxis'])
+        criteria = plot_data['type']
+        
+        customerIndex = np.where(selectedCustomerIndex2Id==customerId)[0][0]
+        
+        dimensions = np.array([1,1,1,1,0])
+        dimensions[ax1] = 0
+        dimensions[ax2] = 0
+
+        if criteria==1:
+            plotCriteria = 'sum'
+            plotMax = 10
+        else:
+            plotCriteria = 'binary'
+            plotMax = 1
+        
+        X = loadFundamentalTensorCustomer('files/AllHours_Item_Customer_Tensor.mat', customerIndex, 16)
+        #X = collapseTensor(X, [1,0,1,0,0], 'sum')
+        X = collapseTensor(X, dimensions, plotCriteria)
+        
+        plt.figure
+        plotTitle = "Sales of Customer %d" % customerId
+        plotTensor(X, numPlots=1, title=plotTitle, vmax=plotMax, figsize=(8, 6))
+        plt.savefig('./files/%d_%d_%d_%d.png' % (customerId,ax1,ax2,criteria))
+
+        imageUrl = ("45.55.237.86:%s/files/%d_%d_%d_%d.png" % (PORT,customerId,ax1,ax2,criteria))
+        
+        info = json.dumps({"image_url": imageUrl})
+        self.write("%s" % info)
+        
+        
 class CustomerMap(tornado.web.RequestHandler):
     def get(self, *args):
         self.post(*args)
@@ -462,8 +577,20 @@ class set_params(tornado.web.RequestHandler):
         tmp = int(self.get_argument('WF'))
         self.write(" WF: ")
         self.write("%d" % tmp) 
-        
+    
+# localhost:8880/json_params?'%7B%22hello%22:%20%22world%22%7D'
+# localhost:8880/json_params?'{"hello": "world"}'
+# localhost:8880/json_params?%27{%22hello%22:%20%22world%22}%27
+# localhost:8880/json_params?{"hello": "world"}
+class json_params(tornado.web.RequestHandler):
+    def get(self):
+        my_data = self.request.arguments["hello"]
+        # do something with my_data 
+        self.write(json.dumps({'status': 'ok'}))
+        self.finish()
 
+        
+        
 # The configuration of routes.
 routes_config = [
     (r"/", MainPage), 
@@ -471,16 +598,18 @@ routes_config = [
     (r"/customerSale/([^/]+)", CustomerSale),
     (r"/customerSaleEtailer/([^/]+)", CustomerSaleEtailer),
     (r"/customerSaleJson/([^/]+)", CustomerSaleJson),
+    (r"/customersOfProfile", CustomersOfProfile),
     (r"/defineProfile", DefineProfile),
     (r"/defineProducts", DefineProducts),
     (r"/midResults", MidResults),
     (r"/set_params", set_params),
+    (r"/json_params", json_params),
     (r"/customerList", CustomerListForProfile),
     (r"/customerMap", CustomerMap),
+    (r"/customerSaleMap", CustomerSaleMap),
     (r"/(.*\.png)", tornado.web.StaticFileHandler,{"path": "." }),
 ]
 application = tornado.web.Application(routes_config)
-
 
 def start():
     print("Obase Tornado Server.\nStarting on host %s, port %s" % (HOST,PORT))
