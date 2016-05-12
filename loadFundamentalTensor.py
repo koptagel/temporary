@@ -59,3 +59,26 @@ def loadFundamentalTensor(filename, numHour):
     newX = np.reshape(X[0:numWeek*numDow*numHour,:,:],(numWeek,numDow,numHour,numItems,numOfCustomers))
     
     return newX, numWeek, numDow, numHour, numItems, numOfCustomers
+
+
+def loadFundamentalTensorCustomer(filename, customerIndex, numHour):
+    tempX = sio.loadmat(filename)
+
+    tempX = clearIrrelevantKeys(tempX)
+    
+    numOfCustomers = len(tempX)
+    numAllHours, numItems = tempX['0'].shape
+    
+    X = np.zeros((numAllHours,numItems,1))
+    
+    X[:,:,0] = tempX[str(customerIndex)].todense()
+    
+    numDow = 7
+    
+    # Find the number of days and the number of weeks the transactions are done
+    numDay = numAllHours//numHour
+    numWeek = numDay//numDow
+    
+    newX = np.reshape(X[0:numWeek*numDow*numHour,:,:],(numWeek,numDow,numHour,numItems,1))
+    
+    return newX
