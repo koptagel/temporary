@@ -67,7 +67,8 @@ class MainPage(tornado.web.RequestHandler):
         
     def post(self):
         self.write('<html><head><h1> Obase Tornado Server </h1></head>'
-                   '<body> Son Guncelleme: 11.05.2016 <br><br>'
+                   '<body> Son Guncelleme: 13.05.2016 13:30 <br><br>'
+                   '* customersOfProfile fonksiyonunda degisiklik yapildi. <br><br>'
                    '<h2> Genel Kullanim </h2>'
                    '45.55.237.86:8880/<b>FonksiyonIsmi</b>?jsonData=<b>JsonInputu</b> <br><br>'
                    'Asagida listelenen butun fonksiyonlarda veriler Json formatinda alinip, sonuclar Json formatinda geri dondurulecektir. <br>'
@@ -80,9 +81,9 @@ class MainPage(tornado.web.RequestHandler):
                    '<h3> customersOfProfile </h3>'
                    'Verilen urun listesine (kullanici profiline) gore, bu profile uyan ilk 10 musterinin idleri, isimleri ve profile olan uygunluklari listelenecektir. <br>'
                    'Musteriler, profile uygunluklarina gore siralanmistir (yuksek yuzdeden dusuk yuzdeye gore). <br><br>'
-                   '<b> Input: </b> 45.55.237.86:8880/<b>customersOfProfile</b>?jsonData=<b>{"Products": [{"id": 165}, {"id": 529}]}</b> <br>'
+                   '<b> Input: </b> 45.55.237.86:8880/<b>customersOfProfile</b>?jsonData=<b>{"Products": [{"id": 10}, {"id": 29}]}</b> <br>'
                    '<b> Output: </b> {"Customers": [{"percentage":98, "id": 123, "name": "Ahmet Yilmaz"}, {"percentage":80, "id": 201, "name": "Hande Ozturk"}, {"percentage":77, "id": 34, "name": "Elif Aras"}]} <br><br>'
-                   'Bu asamada sonuclar yapay olarak uretilmektedir. Fonksiyon yakinda gercek verilere gore guncellenecektir. <br><br>'
+                   'Bu asamada, verilen urun idlerinin [0,184] araliginda olmasi gerekiyor. Ilerleyen zamanda gercek urun idleri seklinde alinacak. <br>'
                    '<h3> customerSaleMap </h3>'
                    'Verilen musteri idsine ve istenilen grafik kriterlerine gore, musteri haritasinin url bilgisi dondurulur. <br><br>'
                    'Grafik kriterlerinin alabilecegi degerler ve ifade ettikleri durumlar asagidaki tablolarda gosterilmistir. <br>'
@@ -206,36 +207,56 @@ class MidResults(tornado.web.RequestHandler):
         
 ############ OBASE FUNCTIONS ##############
 
+# localhost:8880/customersOfProfile?jsonData={"Products": [{"id": 3}, {"id": 7}, {"id": 1}, {"id": 20}, {"id": 19}, {"id": 35}]} 
 class CustomersOfProfile(tornado.web.RequestHandler):
     def get(self, *args):
         self.post(*args)
-
+        
     def post(self, *args):
         temp = self.get_argument('jsonData')
         profile_data = json.loads(temp)
         
         productList = profile_data['Products']
+        numProducts = len(productList)
+        
+        index = []
+        for i in range(numProducts):
+            index.append(productList[i]['id'])
+        
+        global EtailerMatrix
+        s1,s2 = EtailerMatrix.shape
+        rank = 1
+        
+        #index = [3,7,1,19,20,30,35,40]
+        Z2 = np.zeros((rank,s2))
+        Z2[0,index] = 1
+        
+        maxIter = 3
+        
+        _, _, _, _, indices, percentages = nmf(EtailerMatrix, Z2, maxIter, rank)
+        customerIds = EtailerSelectedCustomerIndex2Id[indices]
+        
+        #self.write("Percentages and Customer Ids")
+        #for i in range(len(percentages)):
+        #    self.write(" %f, %d. " %(percentages[i], customerIds[i]))
         
         numCustomers = 10
-        
-        percentages = np.random.randint(100, size=(numCustomers)) + 1
-        indices = np.argsort(percentages,axis=0)[::-1].flatten()
-        percentages = np.sort(percentages,axis=0)[::-1].flatten()
-
-        customerIds = np.random.randint(1000, size=(numCustomers)) + 1
-        customerIds = customerIds[indices]
-
+            
         data = []
         for i in range(numCustomers):
             data2 = {}
             data2['percentage'] = int(percentages[i])
             data2['id'] = int(customerIds[i])
             data2['name'] = "Name Surname"
+            
+            #r = requests.get('http://212.57.2.68:93/api/database/musteri?$filter=IdMusteri+eq+%d'%customerIds[i])
+            #if len(r.json) == 0:
+            #    data2['name'] = "Name Surname"
+            
             data.append(data2)
             
         json_data = json.dumps({"Customers": data})
-        self.write(json_data)      
-
+        self.write(json_data)  
 
 
 class CustomerSaleMap(tornado.web.RequestHandler):
@@ -280,57 +301,38 @@ class CustomerSaleMap(tornado.web.RequestHandler):
         info = json.dumps({"image_url": imageUrl})
         self.write("%s" % info)
         
-# localhost:8880/nmfP?jsonData={"Products": [{"id": 3}, {"id": 7}, {"id": 1}, {"id": 20}, {"id": 19}, {"id": 35}]} 
-class NmfTrial(tornado.web.RequestHandler):
+
+        
+class tempCustomersOfProfile(tornado.web.RequestHandler):
     def get(self, *args):
         self.post(*args)
-        
+
     def post(self, *args):
         temp = self.get_argument('jsonData')
         profile_data = json.loads(temp)
         
         productList = profile_data['Products']
-        numProducts = len(productList)
-        
-        index = []
-        for i in range(numProducts):
-            index.append(productList[i]['id'])
-        
-        global EtailerMatrix
-        s1,s2 = EtailerMatrix.shape
-        rank = 1
-        
-        #index = [3,7,1,19,20,30,35,40]
-        Z2 = np.zeros((rank,s2))
-        Z2[0,index] = 1
-        
-        maxIter = 3
-        
-        _, _, _, _, indices, percentages = nmf(EtailerMatrix, Z2, maxIter, rank)
-        customerIds = EtailerSelectedCustomerIndex2Id[indices]
-        
-        #self.write("Percentages and Customer Ids")
-        #for i in range(len(percentages)):
-        #    self.write(" %f, %d. " %(percentages[i], customerIds[i]))
         
         numCustomers = 10
-            
+        
+        percentages = np.random.randint(100, size=(numCustomers)) + 1
+        indices = np.argsort(percentages,axis=0)[::-1].flatten()
+        percentages = np.sort(percentages,axis=0)[::-1].flatten()
+
+        customerIds = np.random.randint(1000, size=(numCustomers)) + 1
+        customerIds = customerIds[indices]
+
         data = []
         for i in range(numCustomers):
             data2 = {}
             data2['percentage'] = int(percentages[i])
             data2['id'] = int(customerIds[i])
-            
-            #r = requests.get('http://212.57.2.68:93/api/database/musteri?$filter=IdMusteri+eq+%d'%customerIds[i])
-            #if len(r.json) == 0:
-            #    data2['name'] = "Name Surname"
-            
-            
+            data2['name'] = "Name Surname"
             data.append(data2)
             
         json_data = json.dumps({"Customers": data})
-        self.write(json_data)  
-        
+        self.write(json_data)      
+
         
 # The configuration of routes.
 routes_config = [
@@ -340,7 +342,6 @@ routes_config = [
     (r"/midResults", MidResults),
     (r"/customersOfProfile", CustomersOfProfile),
     (r"/customerSaleMap", CustomerSaleMap),
-    (r"/nmfP", NmfTrial),
     (r"/(.*\.png)", tornado.web.StaticFileHandler,{"path": "." }),
 ]
 application = tornado.web.Application(routes_config)
