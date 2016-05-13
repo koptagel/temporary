@@ -41,12 +41,15 @@ selectedCustomerIndex2Id = np.loadtxt('files/customersIndex2Id.txt', dtype='int'
 global EtailerSelectedCustomerIndex2Id
 EtailerSelectedCustomerIndex2Id = np.loadtxt('files/Etailer_customersIndex2Id.txt', dtype='int')
 
-global EtailerTensor
-EtailerTensor,_,_,_,_,_ = loadFundamentalTensor('files/Etailer_AllHours_Item_Customer_Tensor.mat', 24)  
+#global EtailerTensor
+#EtailerTensor,_,_,_,_,_ = loadFundamentalTensor('files/Etailer_AllHours_Item_Customer_Tensor.mat', 24)  
+
+#global EtailerMatrix
+#EtailerMatrix = collapseTensor(EtailerTensor,[1,1,1,0,0],'sum')
+#EtailerMatrix = EtailerMatrix[0,0,0,:,:].T
 
 global EtailerMatrix
-EtailerMatrix = collapseTensor(EtailerTensor,[1,1,1,0,0],'sum')
-EtailerMatrix = EtailerMatrix[0,0,0,:,:].T
+EtailerMatrix = np.load("files/Etailer_Customers_Items100.npy")
 
 global profileList
 profileList = ["Keyifciler", "Tazeciler", "Bebekliler"]
@@ -318,9 +321,9 @@ class NmfTrial(tornado.web.RequestHandler):
             data2['percentage'] = int(percentages[i])
             data2['id'] = int(customerIds[i])
             
-            r = requests.get('http://212.57.2.68:93/api/database/musteri?$filter=IdMusteri+eq+%d'%customerIds[i])
-            if len(r.json) == 0:
-                data2['name'] = "Name Surname"
+            #r = requests.get('http://212.57.2.68:93/api/database/musteri?$filter=IdMusteri+eq+%d'%customerIds[i])
+            #if len(r.json) == 0:
+            #    data2['name'] = "Name Surname"
             
             
             data.append(data2)
@@ -328,8 +331,6 @@ class NmfTrial(tornado.web.RequestHandler):
         json_data = json.dumps({"Customers": data})
         self.write(json_data)  
         
-        r = requests.get('http://212.57.2.68:93/api/database/musteri?$filter=IdMusteri+eq+%d'%customerId)
-r.json()
         
 # The configuration of routes.
 routes_config = [
