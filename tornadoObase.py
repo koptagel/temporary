@@ -33,13 +33,18 @@ PORT = 8880
 DIRNAME = os.path.dirname(os.path.realpath('__file__'))
 STATIC_PATH = os.path.join(DIRNAME, '.')
 
-
 # Creating global variables. 
-global selectedCustomerIndex2Id
-selectedCustomerIndex2Id = np.loadtxt('files/customersIndex2Id.txt', dtype='int')
-
 global EtailerSelectedCustomerIndex2Id
-EtailerSelectedCustomerIndex2Id = np.loadtxt('files/Etailer_customersIndex2Id.txt', dtype='int')
+EtailerSelectedCustomerIndex2Id = np.loadtxt('files/Etailer_customersIndex2Id_200.txt', dtype='int')
+
+global ItemIndex2IdGroup3
+ItemIndex2IdGroup3 = np.loadtxt('files/Etailer_ItemsIndex2IdGroup3.txt', dtype='int')
+
+global itemIds 
+itemIds = np.loadtxt('files/Etailer_ItemIds.txt', dtype='int')
+
+global itemIdsGroup3 
+itemIdsGroup3 = np.loadtxt('files/Etailer_ItemIdsGroup3.txt', dtype='int')
 
 #global EtailerTensor
 #EtailerTensor,_,_,_,_,_ = loadFundamentalTensor('files/Etailer_AllHours_Item_Customer_Tensor.mat', 24)  
@@ -49,7 +54,9 @@ EtailerSelectedCustomerIndex2Id = np.loadtxt('files/Etailer_customersIndex2Id.tx
 #EtailerMatrix = EtailerMatrix[0,0,0,:,:].T
 
 global EtailerMatrix
-EtailerMatrix = np.load("files/Etailer_Customers_Items100.npy")
+EtailerMatrix = np.load("files/Etailer_Customers_Items_200.npy")
+
+
 
 global profileList
 profileList = ["Keyifciler", "Tazeciler", "Bebekliler"]
@@ -67,7 +74,9 @@ class MainPage(tornado.web.RequestHandler):
         
     def post(self):
         self.write('<html><head><h1> Obase Tornado Server </h1></head>'
-                   '<body> Son Guncelleme: 17.05.2016 11:30 <br><br>'
+                   '<body> Son Guncelleme: 17.05.2016 16:30 <br><br>'
+                   '* customersOfProfile fonksiyonu gercek verilerle uyumlu hale getirildi. Artik gercek urun idleri verildiginde fonksiyon calisiyor. <br>'
+                   '* customerSalesMap fonksiyonu gercek verilerle uyumlu hale getirildi. Ornek olarak gosterilen musteri idleri degistirildi. <br><br>'
                    '* customersOfProfile fonksiyonunun parametrelerinde degisiklik yapildi. <br>'
                    '* customerSaleMap fonksiyonunun ismi customerSalesMap olarak degistirildi. <br>'
                    '* Access-Control-Allow-Origin izni icin degisiklikler yapildi. <br><br>'
@@ -85,10 +94,9 @@ class MainPage(tornado.web.RequestHandler):
                    'MinPercentage parametresi, belirli bir profil uygunluguna sahip musterilerin siralanmasini sagliyor. '
                    'Count parametresi ise listelenecek maksimum musteri sayisini belirtiyor. <br>'
                    'Musteriler, profile uygunluklarina gore siralanmistir (yuksek yuzdeden dusuk yuzdeye gore). <br><br>'
-                   '<b> Input: </b> 45.55.237.86:8880/<b>customersOfProfile</b>?jsonData=<b>{"Count":5, "MinPercentage":60, "Products": [{"id": 10}, {"id": 29}]}</b> <br>'
-                   '<b> Output: </b> {"Customers": [{"percentage":98, "id": 123}, {"percentage":80, "id": 201}, {"percentage":77, "id": 34}]} <br>'
+                   '<b> Input: </b> 45.55.237.86:8880/<b>customersOfProfile</b>?jsonData=<b>{"Count":5, "MinPercentage":60, "Products": [{"id": 32748}, {"id": 32747}, {"id": 32874}, {"id": 32823}]}</b> <br>'
+                   '<b> Output: </b> {"Customers": [{"percentage":98, "id": 90361}, {"percentage":80, "id": 90412}, {"percentage":77, "id": 1073258}]} <br>'
                    'Bu ornekte, verilen urunlere uyan, profil uygunlugu %60in uzerinde olan maksimum 5 musteri listeleniyor. <br><br>'
-                   'Bu asamada, verilen urun idlerinin [0,184] araliginda olmasi gerekiyor. Ilerleyen zamanda gercek urun idleri seklinde alinacak. <br>'
                    '<h3> customerSalesMap </h3>'
                    'Verilen musteri idsine ve istenilen grafik kriterlerine gore, musteri haritasinin url bilgisi dondurulur. <br><br>'
                    'Grafik kriterlerinin alabilecegi degerler ve ifade ettikleri durumlar asagidaki tablolarda gosterilmistir. <br>'
@@ -102,10 +110,10 @@ class MainPage(tornado.web.RequestHandler):
                    '<tr><td> 1 </td><td> 2 </td></tr><br>'
                    '<tr><td> Toplam Satis Tutari </td><td> Satis yapilip yapilmadigi (0 veya 1 seklinde) </td></tr><br>'
                    '</table> <br>'
-                   '<b> Input: </b> 45.55.237.86:8880/<b>customerSalesMap</b>?jsonData=<b>{"id": 991921217, "xAxis":0, "yAxis": 2, "type": 1} </b><br>'
-                   '<b> Output: </b> {"image_url": "45.55.237.86:8880/files/991921217_0_2_1.png"} <br>'
-                   'Bu ornekte 991921217 numarali musterinin haftalara ve saatlere gore yaptigi toplam harcama gosterilmektedir. <br><br>'
-                   'Ornek olarak kullanilabilecek musteri idleri: 99888001, 991921217, 99958429. <br><br>'
+                   '<b> Input: </b> 45.55.237.86:8880/<b>customerSalesMap</b>?jsonData=<b>{"id": 90412, "xAxis":0, "yAxis": 2, "type": 1} </b><br>'
+                   '<b> Output: </b> {"image_url": "45.55.237.86:8880/files/90412_0_2_1.png"} <br>'
+                   'Bu ornekte 90412 numarali musterinin haftalara ve saatlere gore yaptigi toplam harcama gosterilmektedir. <br><br>'
+                   'Ornek olarak kullanilabilecek musteri idleri: 1073258, 999538, 1155093. <br><br>'
                    '</body></html>')
         
 
@@ -228,9 +236,18 @@ class CustomersOfProfile(tornado.web.RequestHandler):
         productList = profile_data['Products']
         numProducts = len(productList)
         
+        #index = []
+        #for i in range(numProducts):
+        #    index.append(productList[i]['id'])
+        
         index = []
         for i in range(numProducts):
-            index.append(productList[i]['id'])
+            pid = productList[i]['id']
+            
+            if pid in itemIds:
+                ind = np.where(itemIds==pid)[0][0]
+                pid3 = itemIdsGroup3[ind]
+                index.append(np.where(ItemIndex2IdGroup3==pid3)[0][0])
         
         global EtailerMatrix
         s1,s2 = EtailerMatrix.shape
@@ -284,7 +301,9 @@ class CustomerSalesMap(tornado.web.RequestHandler):
         ax2 = int(plot_data['yAxis'])
         criteria = plot_data['type']
         
-        customerIndex = np.where(selectedCustomerIndex2Id==customerId)[0][0]
+        #customerIndex = np.where(selectedCustomerIndex2Id==customerId)[0][0]
+        customerIndex = np.where(EtailerSelectedCustomerIndex2Id==customerId)[0][0]
+        
         
         dimensions = np.array([1,1,1,1,0])
         dimensions[ax1] = 0
@@ -292,20 +311,18 @@ class CustomerSalesMap(tornado.web.RequestHandler):
 
         if criteria==1:
             plotCriteria = 'sum'
-            plotMax = 10
         else:
             plotCriteria = 'binary'
-            plotMax = 1
         
-        X = loadFundamentalTensorCustomer('files/AllHours_Item_Customer_Tensor.mat', customerIndex, 16)
+        X = loadFundamentalTensorCustomer('files/Etailer_AllHours_Item_Customer_Tensor_200.mat', customerIndex, 24)
         X = collapseTensor(X, dimensions, plotCriteria)
         
         plt.figure
         plotTitle = "Sales of Customer %d" % customerId
         if ax1 < ax2:
-            plotTensor(X, numPlots=1, title=plotTitle, vmax=plotMax, figsize=(8, 6))
+            plotTensor(X, numPlots=1, title=plotTitle, figsize=(8, 6))
         else: 
-            plotTensorTr(X, numPlots=1, title=plotTitle, vmax=plotMax, figsize=(8, 6))
+            plotTensorTr(X, numPlots=1, title=plotTitle, figsize=(8, 6))
         plt.savefig('./files/%d_%d_%d_%d.png' % (customerId,ax1,ax2,criteria))
 
         imageUrl = ("45.55.237.86:%s/files/%d_%d_%d_%d.png" % (PORT,customerId,ax1,ax2,criteria))
@@ -314,38 +331,6 @@ class CustomerSalesMap(tornado.web.RequestHandler):
         self.write("%s" % info)
         
 
-        
-class tempCustomersOfProfile(tornado.web.RequestHandler):
-    def get(self, *args):
-        self.post(*args)
-
-    def post(self, *args):
-        temp = self.get_argument('jsonData')
-        profile_data = json.loads(temp)
-        
-        productList = profile_data['Products']
-        
-        numCustomers = 10
-        
-        percentages = np.random.randint(100, size=(numCustomers)) + 1
-        indices = np.argsort(percentages,axis=0)[::-1].flatten()
-        percentages = np.sort(percentages,axis=0)[::-1].flatten()
-
-        customerIds = np.random.randint(1000, size=(numCustomers)) + 1
-        customerIds = customerIds[indices]
-
-        data = []
-        for i in range(numCustomers):
-            data2 = {}
-            data2['percentage'] = int(percentages[i])
-            data2['id'] = int(customerIds[i])
-            data2['name'] = "Name Surname"
-            data.append(data2)
-            
-        json_data = json.dumps({"Customers": data})
-        self.write(json_data)      
-
-        
 # The configuration of routes.
 routes_config = [
     (r"/", MainPage), 

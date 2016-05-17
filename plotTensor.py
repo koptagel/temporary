@@ -1,3 +1,4 @@
+# %load plotTensor.py
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -19,7 +20,8 @@ def main():
 
 if __name__ == "__main__": main()
 
-def plotTensor(X, numPlots, title, vmax=300, figsize=(5, 3)):           
+#def plotTensor(X, numPlots, title, vmax=300, figsize=(5, 3)):          
+def plotTensor(X, numPlots, title, figsize=(5, 3)):           
     '''
     Given the tensor X and the maximum number of plots we want to display, 
     this function looks at the dimensions of the tensor and produces the corresponding plots.
@@ -47,7 +49,8 @@ def plotTensor(X, numPlots, title, vmax=300, figsize=(5, 3)):
         for idx in range(numPlots): 
             fig = plt.figure(num=None, figsize=figsize, dpi=80, facecolor='w', edgecolor='k')
 
-            plt.imshow(X[:,:,0,0,idx].T, aspect='auto', interpolation='nearest', vmin=0, vmax=vmax)
+            #plt.imshow(X[:,:,0,0,idx].T, aspect='auto', interpolation='nearest', vmin=0, vmax=vmax)
+            plt.imshow(X[:,:,0,0,idx].T, aspect='auto', interpolation='nearest', vmin=0)
             plt.xlabel('Week')
             plt.ylabel('Day of Week')
             plt.yticks(np.arange(7), ['Mo','Tu','We','Th','Fr','Sa','Su'])
@@ -61,7 +64,7 @@ def plotTensor(X, numPlots, title, vmax=300, figsize=(5, 3)):
         for idx in range(numPlots): 
             fig = plt.figure(num=None, figsize=figsize, dpi=80, facecolor='w', edgecolor='k')
 
-            plt.imshow(X[:,0,:,0,idx].T, aspect='auto', interpolation='nearest', vmin=0, vmax=vmax)
+            plt.imshow(X[:,0,:,0,idx].T, aspect='auto', interpolation='nearest', vmin=0)
             plt.xlabel('Week')
             plt.ylabel('Hours')
             plt.title(title)
@@ -74,7 +77,7 @@ def plotTensor(X, numPlots, title, vmax=300, figsize=(5, 3)):
         for idx in range(numPlots): 
             fig = plt.figure(num=None, figsize=figsize, dpi=80, facecolor='w', edgecolor='k')
             
-            plt.imshow(X[0,:,:,0,idx].T, aspect='auto', interpolation='nearest', vmin=0, vmax=vmax)
+            plt.imshow(X[0,:,:,0,idx].T, aspect='auto', interpolation='nearest', vmin=0)
             plt.ylabel('Hours')
             plt.xlabel('Day of Week')
             plt.xticks(np.arange(7), ['Mo','Tu','We','Th','Fr','Sa','Su'])
@@ -88,7 +91,7 @@ def plotTensor(X, numPlots, title, vmax=300, figsize=(5, 3)):
         for idx in range(numPlots): 
             fig = plt.figure(num=None, figsize=figsize, dpi=80, facecolor='w', edgecolor='k')
             
-            plt.imshow(X[:,0,0,:,idx].T, aspect='auto', interpolation='nearest', vmin=0, vmax=vmax)
+            plt.imshow(X[:,0,0,:,idx].T, aspect='auto', interpolation='nearest', vmin=0)
             plt.ylabel('Items')
             plt.xlabel('Week')
             plt.title(title)
@@ -101,7 +104,7 @@ def plotTensor(X, numPlots, title, vmax=300, figsize=(5, 3)):
         for idx in range(numPlots): 
             fig = plt.figure(num=None, figsize=figsize, dpi=80, facecolor='w', edgecolor='k')
             
-            plt.imshow(X[0,:,0,:,idx].T, aspect='auto', interpolation='nearest', vmin=0, vmax=vmax)
+            plt.imshow(X[0,:,0,:,idx].T, aspect='auto', interpolation='nearest', vmin=0)
             plt.ylabel('Items')
             plt.xlabel('Day of Week')
             plt.xticks(np.arange(7), ['Mo','Tu','We','Th','Fr','Sa','Su'])
@@ -115,7 +118,7 @@ def plotTensor(X, numPlots, title, vmax=300, figsize=(5, 3)):
         for idx in range(numPlots): 
             fig = plt.figure(num=None, figsize=figsize, dpi=80, facecolor='w', edgecolor='k')
             
-            plt.imshow(X[0,0,:,:,idx].T, aspect='auto', interpolation='nearest', vmin=0, vmax=vmax)
+            plt.imshow(X[0,0,:,:,idx].T, aspect='auto', interpolation='nearest', vmin=0)
             plt.ylabel('Items')
             plt.xlabel('Hours')
             plt.title(title)
@@ -125,8 +128,8 @@ def plotTensor(X, numPlots, title, vmax=300, figsize=(5, 3)):
     else:
         print('Invalid dimensions')
         
-        
-def plotTensorTr(X, numPlots, title, vmax=300, figsize=(5, 3)):           
+#def plotTensorTr(X, numPlots, title, vmax=300, figsize=(5, 3)):      
+def plotTensorTr(X, numPlots, title, figsize=(5, 3)):           
     '''
     Given the tensor X and the maximum number of plots we want to display, 
     this function looks at the dimensions of the tensor and produces the corresponding plots.
@@ -154,7 +157,7 @@ def plotTensorTr(X, numPlots, title, vmax=300, figsize=(5, 3)):
         for idx in range(numPlots): 
             fig = plt.figure(num=None, figsize=figsize, dpi=80, facecolor='w', edgecolor='k')
 
-            plt.imshow(X[:,:,0,0,idx], aspect='auto', interpolation='nearest', vmin=0, vmax=vmax)
+            plt.imshow(X[:,:,0,0,idx], aspect='auto', interpolation='nearest', vmin=0)
             plt.ylabel('Week')
             plt.xlabel('Day of Week')
             plt.xticks(np.arange(7), ['Mo','Tu','We','Th','Fr','Sa','Su'])
@@ -168,7 +171,7 @@ def plotTensorTr(X, numPlots, title, vmax=300, figsize=(5, 3)):
         for idx in range(numPlots): 
             fig = plt.figure(num=None, figsize=figsize, dpi=80, facecolor='w', edgecolor='k')
 
-            plt.imshow(X[:,0,:,0,idx], aspect='auto', interpolation='nearest', vmin=0, vmax=vmax)
+            plt.imshow(X[:,0,:,0,idx], aspect='auto', interpolation='nearest', vmin=0)
             plt.ylabel('Week')
             plt.xlabel('Hours')
             plt.title(title)
@@ -181,7 +184,7 @@ def plotTensorTr(X, numPlots, title, vmax=300, figsize=(5, 3)):
         for idx in range(numPlots): 
             fig = plt.figure(num=None, figsize=figsize, dpi=80, facecolor='w', edgecolor='k')
             
-            plt.imshow(X[0,:,:,0,idx], aspect='auto', interpolation='nearest', vmin=0, vmax=vmax)
+            plt.imshow(X[0,:,:,0,idx], aspect='auto', interpolation='nearest', vmin=0)
             plt.xlabel('Hours')
             plt.ylabel('Day of Week')
             plt.yticks(np.arange(7), ['Mo','Tu','We','Th','Fr','Sa','Su'])
@@ -195,7 +198,7 @@ def plotTensorTr(X, numPlots, title, vmax=300, figsize=(5, 3)):
         for idx in range(numPlots): 
             fig = plt.figure(num=None, figsize=figsize, dpi=80, facecolor='w', edgecolor='k')
             
-            plt.imshow(X[:,0,0,:,idx], aspect='auto', interpolation='nearest', vmin=0, vmax=vmax)
+            plt.imshow(X[:,0,0,:,idx], aspect='auto', interpolation='nearest', vmin=0)
             plt.xlabel('Items')
             plt.ylabel('Week')
             plt.title(title)
@@ -208,7 +211,7 @@ def plotTensorTr(X, numPlots, title, vmax=300, figsize=(5, 3)):
         for idx in range(numPlots): 
             fig = plt.figure(num=None, figsize=figsize, dpi=80, facecolor='w', edgecolor='k')
             
-            plt.imshow(X[0,:,0,:,idx], aspect='auto', interpolation='nearest', vmin=0, vmax=vmax)
+            plt.imshow(X[0,:,0,:,idx], aspect='auto', interpolation='nearest', vmin=0)
             plt.xlabel('Items')
             plt.ylabel('Day of Week')
             plt.yticks(np.arange(7), ['Mo','Tu','We','Th','Fr','Sa','Su'])
@@ -222,7 +225,7 @@ def plotTensorTr(X, numPlots, title, vmax=300, figsize=(5, 3)):
         for idx in range(numPlots): 
             fig = plt.figure(num=None, figsize=figsize, dpi=80, facecolor='w', edgecolor='k')
             
-            plt.imshow(X[0,0,:,:,idx], aspect='auto', interpolation='nearest', vmin=0, vmax=vmax)
+            plt.imshow(X[0,0,:,:,idx], aspect='auto', interpolation='nearest', vmin=0)
             plt.xlabel('Items')
             plt.ylabel('Hours')
             plt.title(title)
