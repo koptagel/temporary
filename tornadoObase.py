@@ -35,7 +35,7 @@ STATIC_PATH = os.path.join(DIRNAME, '.')
 
 # Creating global variables. 
 global EtailerSelectedCustomerIndex2Id
-EtailerSelectedCustomerIndex2Id = np.loadtxt('files/Etailer_customersIndex2Id_200.txt', dtype='int')
+EtailerSelectedCustomerIndex2Id = np.loadtxt('files/Etailer_customersIndex2Id_400.txt', dtype='int')
 
 global ItemIndex2IdGroup3
 ItemIndex2IdGroup3 = np.loadtxt('files/Etailer_ItemsIndex2IdGroup3.txt', dtype='int')
@@ -54,7 +54,7 @@ itemIdsGroup3 = np.loadtxt('files/Etailer_ItemIdsGroup3.txt', dtype='int')
 #EtailerMatrix = EtailerMatrix[0,0,0,:,:].T
 
 global EtailerMatrix
-EtailerMatrix = np.load("files/Etailer_Customers_Items_200.npy")
+EtailerMatrix = np.load("files/Etailer_Customers_Items_400.npy")
 
 
 
@@ -74,7 +74,7 @@ class MainPage(tornado.web.RequestHandler):
         
     def post(self):
         self.write('<html><head><h1> Obase Tornado Server </h1></head>'
-                   '<body> Son Guncelleme: 17.05.2016 16:30 <br><br>'
+                   '<body> Son Guncelleme: 17.05.2016 17:30 <br><br>'
                    '* customersOfProfile fonksiyonu gercek verilerle uyumlu hale getirildi. Artik gercek urun idleri verildiginde fonksiyon calisiyor. <br>'
                    '* customerSalesMap fonksiyonu gercek verilerle uyumlu hale getirildi. Ornek olarak gosterilen musteri idleri degistirildi. <br><br>'
                    '* customersOfProfile fonksiyonunun parametrelerinde degisiklik yapildi. <br>'
@@ -314,7 +314,7 @@ class CustomerSalesMap(tornado.web.RequestHandler):
         else:
             plotCriteria = 'binary'
         
-        X = loadFundamentalTensorCustomer('files/Etailer_AllHours_Item_Customer_Tensor_200.mat', customerIndex, 24)
+        X = loadFundamentalTensorCustomer('files/Etailer_AllHours_Item_Customer_Tensor_400.mat', customerIndex, 24)
         X = collapseTensor(X, dimensions, plotCriteria)
         
         plt.figure
