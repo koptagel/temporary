@@ -67,8 +67,10 @@ class MainPage(tornado.web.RequestHandler):
         
     def post(self):
         self.write('<html><head><h1> Obase Tornado Server </h1></head>'
-                   '<body> Son Guncelleme: 13.05.2016 13:30 <br><br>'
-                   '* customersOfProfile fonksiyonunda degisiklik yapildi. <br><br>'
+                   '<body> Son Guncelleme: 17.05.2016 11:30 <br><br>'
+                   '* customersOfProfile fonksiyonunun parametrelerinde degisiklik yapildi. <br>'
+                   '* customerSaleMap fonksiyonunun ismi customerSalesMap olarak degistirildi. <br>'
+                   '* Access-Control-Allow-Origin izni icin degisiklikler yapildi. <br><br>'
                    '<h2> Genel Kullanim </h2>'
                    '45.55.237.86:8880/<b>FonksiyonIsmi</b>?jsonData=<b>JsonInputu</b> <br><br>'
                    'Asagida listelenen butun fonksiyonlarda veriler Json formatinda alinip, sonuclar Json formatinda geri dondurulecektir. <br>'
@@ -79,12 +81,15 @@ class MainPage(tornado.web.RequestHandler):
                    'Bu temel yapiya ek olarak baska bilgiler de ayni Json inputunun icerisinde gonderilebilir. <br>'
                    '<h2> Fonksiyonlar </h2>'
                    '<h3> customersOfProfile </h3>'
-                   'Verilen urun listesine (kullanici profiline) gore, bu profile uyan ilk 10 musterinin idleri, isimleri ve profile olan uygunluklari listelenecektir. <br>'
+                   'Verilen urun listesine (kullanici profiline) ve kriterlere gore, bu profile uyan musterilerin idleri ve profile olan uygunluklari listelenecektir. <br>'
+                   'MinPercentage parametresi, belirli bir profil uygunluguna sahip musterilerin siralanmasini sagliyor. '
+                   'Count parametresi ise listelenecek maksimum musteri sayisini belirtiyor. <br>'
                    'Musteriler, profile uygunluklarina gore siralanmistir (yuksek yuzdeden dusuk yuzdeye gore). <br><br>'
-                   '<b> Input: </b> 45.55.237.86:8880/<b>customersOfProfile</b>?jsonData=<b>{"Products": [{"id": 10}, {"id": 29}]}</b> <br>'
-                   '<b> Output: </b> {"Customers": [{"percentage":98, "id": 123, "name": "Ahmet Yilmaz"}, {"percentage":80, "id": 201, "name": "Hande Ozturk"}, {"percentage":77, "id": 34, "name": "Elif Aras"}]} <br><br>'
+                   '<b> Input: </b> 45.55.237.86:8880/<b>customersOfProfile</b>?jsonData=<b>{"Count":5, "MinPercentage":60, "Products": [{"id": 10}, {"id": 29}]}</b> <br>'
+                   '<b> Output: </b> {"Customers": [{"percentage":98, "id": 123}, {"percentage":80, "id": 201}, {"percentage":77, "id": 34}]} <br>'
+                   'Bu ornekte, verilen urunlere uyan, profil uygunlugu %60in uzerinde olan maksimum 5 musteri listeleniyor. <br><br>'
                    'Bu asamada, verilen urun idlerinin [0,184] araliginda olmasi gerekiyor. Ilerleyen zamanda gercek urun idleri seklinde alinacak. <br>'
-                   '<h3> customerSaleMap </h3>'
+                   '<h3> customerSalesMap </h3>'
                    'Verilen musteri idsine ve istenilen grafik kriterlerine gore, musteri haritasinin url bilgisi dondurulur. <br><br>'
                    'Grafik kriterlerinin alabilecegi degerler ve ifade ettikleri durumlar asagidaki tablolarda gosterilmistir. <br>'
                    'X ve Y Duzlemleri:'
@@ -97,7 +102,7 @@ class MainPage(tornado.web.RequestHandler):
                    '<tr><td> 1 </td><td> 2 </td></tr><br>'
                    '<tr><td> Toplam Satis Tutari </td><td> Satis yapilip yapilmadigi (0 veya 1 seklinde) </td></tr><br>'
                    '</table> <br>'
-                   '<b> Input: </b> 45.55.237.86:8880/<b>customerSaleMap</b>?jsonData=<b>{"id": 991921217, "xAxis":0, "yAxis": 2, "type": 1} </b><br>'
+                   '<b> Input: </b> 45.55.237.86:8880/<b>customerSalesMap</b>?jsonData=<b>{"id": 991921217, "xAxis":0, "yAxis": 2, "type": 1} </b><br>'
                    '<b> Output: </b> {"image_url": "45.55.237.86:8880/files/991921217_0_2_1.png"} <br>'
                    'Bu ornekte 991921217 numarali musterinin haftalara ve saatlere gore yaptigi toplam harcama gosterilmektedir. <br><br>'
                    'Ornek olarak kullanilabilecek musteri idleri: 99888001, 991921217, 99958429. <br><br>'
@@ -209,6 +214,10 @@ class MidResults(tornado.web.RequestHandler):
 
 # localhost:8880/customersOfProfile?jsonData={"Products": [{"id": 3}, {"id": 7}, {"id": 1}, {"id": 20}, {"id": 19}, {"id": 35}]} 
 class CustomersOfProfile(tornado.web.RequestHandler):
+        
+    def set_default_headers(self):
+        self.set_header("Access-Control-Allow-Origin", "*")
+    
     def get(self, *args):
         self.post(*args)
         
@@ -240,26 +249,29 @@ class CustomersOfProfile(tornado.web.RequestHandler):
         #for i in range(len(percentages)):
         #    self.write(" %f, %d. " %(percentages[i], customerIds[i]))
         
-        numCustomers = 10
-            
+        numCustomers = profile_data['Count']
+        minPercentage = profile_data['MinPercentage']
+        
+        count = 0
         data = []
-        for i in range(numCustomers):
-            data2 = {}
-            data2['percentage'] = int(percentages[i])
-            data2['id'] = int(customerIds[i])
-            data2['name'] = "Name Surname"
-            
-            #r = requests.get('http://212.57.2.68:93/api/database/musteri?$filter=IdMusteri+eq+%d'%customerIds[i])
-            #if len(r.json) == 0:
-            #    data2['name'] = "Name Surname"
-            
-            data.append(data2)
+        for i in range(len(customerIds)):
+            if count < numCustomers:
+                if int(percentages[i])>= minPercentage:
+                    data2 = {}
+                    data2['percentage'] = int(percentages[i])
+                    data2['id'] = int(customerIds[i])
+
+                    data.append(data2)
+                    count = count+1
             
         json_data = json.dumps({"Customers": data})
         self.write(json_data)  
 
 
-class CustomerSaleMap(tornado.web.RequestHandler):
+class CustomerSalesMap(tornado.web.RequestHandler):
+    def set_default_headers(self):
+        self.set_header("Access-Control-Allow-Origin", "*")
+        
     def get(self, *args):
         self.post(*args)
         
@@ -341,7 +353,7 @@ routes_config = [
     (r"/defineProducts", DefineProducts),
     (r"/midResults", MidResults),
     (r"/customersOfProfile", CustomersOfProfile),
-    (r"/customerSaleMap", CustomerSaleMap),
+    (r"/customerSalesMap", CustomerSalesMap),
     (r"/(.*\.png)", tornado.web.StaticFileHandler,{"path": "." }),
 ]
 application = tornado.web.Application(routes_config)
