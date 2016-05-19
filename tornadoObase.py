@@ -74,12 +74,10 @@ class MainPage(tornado.web.RequestHandler):
         
     def post(self):
         self.write('<html><head><h1> Obase Tornado Server </h1></head>'
-                   '<body> Son Guncelleme: 17.05.2016 17:30 <br><br>'
+                   '<body> Son Guncelleme: 19.05.2016 23:30 <br><br>'
+                   '* similarCustomers fonksiyonun yapisi eklendi. Su anda arka plandaki kod uzerinde calisiliyor. <br><br>'
                    '* customersOfProfile fonksiyonu gercek verilerle uyumlu hale getirildi. Artik gercek urun idleri verildiginde fonksiyon calisiyor. <br>'
                    '* customerSalesMap fonksiyonu gercek verilerle uyumlu hale getirildi. Ornek olarak gosterilen musteri idleri degistirildi. <br><br>'
-                   '* customersOfProfile fonksiyonunun parametrelerinde degisiklik yapildi. <br>'
-                   '* customerSaleMap fonksiyonunun ismi customerSalesMap olarak degistirildi. <br>'
-                   '* Access-Control-Allow-Origin izni icin degisiklikler yapildi. <br><br>'
                    '<h2> Genel Kullanim </h2>'
                    '45.55.237.86:8880/<b>FonksiyonIsmi</b>?jsonData=<b>JsonInputu</b> <br><br>'
                    'Asagida listelenen butun fonksiyonlarda veriler Json formatinda alinip, sonuclar Json formatinda geri dondurulecektir. <br>'
@@ -114,6 +112,13 @@ class MainPage(tornado.web.RequestHandler):
                    '<b> Output: </b> {"image_url": "45.55.237.86:8880/files/90412_0_2_1.png"} <br>'
                    'Bu ornekte 90412 numarali musterinin haftalara ve saatlere gore yaptigi toplam harcama gosterilmektedir. <br><br>'
                    'Ornek olarak kullanilabilecek musteri idleri: 1073258, 999538, 1155093. <br><br>'
+                   '<h3> similarCustomers </h3>'
+                   'Verilen musteri idsine, grafik kriterlerine, kisi sayisi ve uygunluk sinirina gore, musteriye benzer olan diger musterilerin listesi ve benzerlik oranlari dondurulur. <br><br>'
+                   'Grafik kriterlerinin alabilecegi degerler ve ifade ettikleri durumlar customerSalesMap fonksiyonundaki gibidir. <br>'
+                   'Count ve MinPercentage parametrelerinin islevleri customersOfProfile fonksiyonundaki islevleriyle aynidir. <br><br> '
+                   '<b> Input: </b> 45.55.237.86:8880/<b>similarCustomers</b>?jsonData=<b>{"id": 90412, "xAxis":0, "yAxis": 2, "type": 1, "Count":5, "MinPercentage":60} </b><br>'
+                   '<b> Output: </b> {"Customers": [{"percentage":98, "id": 90361}, {"percentage":80, "id": 90412}, {"percentage":77, "id": 1073258}, {"percentage":65, "id": 2032979}]} <br>'  
+                   'Bu ornekte 90412 numarali musterinin alim aliskanligina (haftalara ve saatlere gore yaptigi toplam harcama miktari) en cok benzerlik gosteren, profil uygunlugu %60in uzerinde olan maksimum 5 musteri listeleniyor. <br><br>'
                    '</body></html>')
         
 
@@ -329,6 +334,53 @@ class CustomerSalesMap(tornado.web.RequestHandler):
         
         info = json.dumps({"image_url": imageUrl})
         self.write("%s" % info)
+
+
+class similarCustomers(tornado.web.RequestHandler):
+    def set_default_headers(self):
+        self.set_header("Access-Control-Allow-Origin", "*")
+        
+    def get(self, *args):
+        self.post(*args)
+        
+    def post(self, *args):
+        temp = self.get_argument('jsonData')
+        similar_data = json.loads(temp)
+        
+        customerId = int(similar_data['id'])
+        ax1 = int(similar_data['xAxis'])
+        ax2 = int(similar_data['yAxis'])
+        criteria = similar_data['type']
+        
+        numCustomers = similar_data['Count']
+        minPercentage = similar_data['MinPercentage']
+        
+        customerIndex = np.where(EtailerSelectedCustomerIndex2Id==customerId)[0][0]
+        
+        # synthetic data
+        percentages = np.random.randint(100, size=(numCustomers)) + 1
+        indices = np.argsort(percentages,axis=0)[::-1].flatten()
+        percentages = np.sort(percentages,axis=0)[::-1].flatten()
+
+        customerIndices = np.random.randint(1000, size=(numCustomers)) + 1
+        customerIds = EtailerSelectedCustomerIndex2Id[customerIndices]
+        
+        count = 0
+        data = []
+        for i in range(len(customerIds)):
+            if count < numCustomers:
+                if int(percentages[i])>= minPercentage:
+                    data2 = {}
+                    data2['percentage'] = int(percentages[i])
+                    data2['id'] = int(customerIds[i])
+
+                    data.append(data2)
+                    count = count+1
+            
+        json_data = json.dumps({"Customers": data})
+        self.write(json_data)  
+
+        
         
 
 # The configuration of routes.
@@ -339,6 +391,7 @@ routes_config = [
     (r"/midResults", MidResults),
     (r"/customersOfProfile", CustomersOfProfile),
     (r"/customerSalesMap", CustomerSalesMap),
+    (r"/similarCustomers", similarCustomers),
     (r"/(.*\.png)", tornado.web.StaticFileHandler,{"path": "." }),
 ]
 application = tornado.web.Application(routes_config)
