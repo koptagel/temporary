@@ -24,6 +24,7 @@ from collapseTensor import collapseTensor
 from plotTensor import plotTensor
 from plotTensor import plotTensorTr
 from NMF import nmf
+from distance import distance
 
 
 # Setting host name, port number, directory name and the static path. 
@@ -64,6 +65,8 @@ profileList = ["Keyifciler", "Tazeciler", "Bebekliler"]
 global productList 
 productList = ["Cips", "Fistik", "Kola"]
 
+global tempIndices
+tempIndices = np.zeros((1000))
 
 ############ HTML CLASSES ##############
 
@@ -119,6 +122,7 @@ class MainPage(tornado.web.RequestHandler):
                    '<b> Input: </b> 45.55.237.86:8880/<b>similarCustomers</b>?jsonData=<b>{"id": 90412, "xAxis":0, "yAxis": 2, "type": 1, "Count":5, "MinPercentage":60} </b><br>'
                    '<b> Output: </b> {"Customers": [{"percentage":98, "id": 90361}, {"percentage":80, "id": 90412}, {"percentage":77, "id": 1073258}, {"percentage":65, "id": 2032979}]} <br>'  
                    'Bu ornekte 90412 numarali musterinin alim aliskanligina (haftalara ve saatlere gore yaptigi toplam harcama miktari) en cok benzerlik gosteren, profil uygunlugu %60in uzerinde olan maksimum 5 musteri listeleniyor. <br><br>'
+                   'Ornek olarak kullanilabilecek musteri idleri: 1073258, 999538, 1155093. <br><br>'
                    '</body></html>')
         
 
@@ -225,7 +229,6 @@ class MidResults(tornado.web.RequestHandler):
         
 ############ OBASE FUNCTIONS ##############
 
-# localhost:8880/customersOfProfile?jsonData={"Products": [{"id": 3}, {"id": 7}, {"id": 1}, {"id": 20}, {"id": 19}, {"id": 35}]} 
 class CustomersOfProfile(tornado.web.RequestHandler):
         
     def set_default_headers(self):
@@ -238,56 +241,70 @@ class CustomersOfProfile(tornado.web.RequestHandler):
         temp = self.get_argument('jsonData')
         profile_data = json.loads(temp)
         
-        productList = profile_data['Products']
-        numProducts = len(productList)
-        
-        #index = []
-        #for i in range(numProducts):
-        #    index.append(productList[i]['id'])
-        
-        index = []
-        for i in range(numProducts):
-            pid = productList[i]['id']
-            
-            if pid in itemIds:
-                ind = np.where(itemIds==pid)[0][0]
-                pid3 = itemIdsGroup3[ind]
-                index.append(np.where(ItemIndex2IdGroup3==pid3)[0][0])
-        
-        global EtailerMatrix
-        s1,s2 = EtailerMatrix.shape
-        rank = 1
-        
-        #index = [3,7,1,19,20,30,35,40]
-        Z2 = np.zeros((rank,s2))
-        Z2[0,index] = 1
-        
-        maxIter = 3
-        
-        _, _, _, _, indices, percentages = nmf(EtailerMatrix, Z2, maxIter, rank)
-        customerIds = EtailerSelectedCustomerIndex2Id[indices]
-        
-        #self.write("Percentages and Customer Ids")
-        #for i in range(len(percentages)):
-        #    self.write(" %f, %d. " %(percentages[i], customerIds[i]))
-        
         numCustomers = profile_data['Count']
         minPercentage = profile_data['MinPercentage']
-        
-        count = 0
-        data = []
-        for i in range(len(customerIds)):
-            if count < numCustomers:
-                if int(percentages[i])>= minPercentage:
-                    data2 = {}
-                    data2['percentage'] = int(percentages[i])
-                    data2['id'] = int(customerIds[i])
+        #criteria = profile_data['type']
+    
+        if numCustomers<1:
+            self.write("Invalid count. Count must be more than 0.")
+        elif minPercentage>100:
+            self.write("Invalid percentage. Minimum percentage must less than or equal to 100.")
+        #elif criteria not in [1,2]:
+        #    self.write("Invalid Type. Type must be 1 or 2.")
+        else:
 
-                    data.append(data2)
-                    count = count+1
+            productList = profile_data['Products']
+            numProducts = len(productList)
+
+            index = []
+            invalidItems = []
+            for i in range(numProducts):
+                pid = productList[i]['id']
+
+                if pid in itemIds:
+                    ind = np.where(itemIds==pid)[0][0]
+                    pid3 = itemIdsGroup3[ind]
+                    index.append(np.where(ItemIndex2IdGroup3==pid3)[0][0])
+                else:
+                    data2 = {}
+                    data2['id'] = int(pid)
+                    invalidItems.append(data2)
+
+            global EtailerMatrix
+            EtailerMatrix[np.where(EtailerMatrix>0)]=1
             
-        json_data = json.dumps({"Customers": data})
-        self.write(json_data)  
+            #if criteria == 2:
+            #    EtailerMatrix[np.where(EtailerMatrix>0)]=1
+            
+            s1,s2 = EtailerMatrix.shape
+            rank = 1
+
+            Z2 = np.zeros((rank,s2))
+            Z2[0,index] = 1
+
+            maxIter = 3
+
+            _, _, _, _, indices, percentages = nmf(EtailerMatrix, Z2, maxIter, rank)
+            customerIds = EtailerSelectedCustomerIndex2Id[indices]
+
+            count = 0
+            data = []
+            for i in range(len(customerIds)):
+                if count < numCustomers:
+                    if int(percentages[i])>= minPercentage:
+                        data2 = {}
+                        data2['percentage'] = int(percentages[i])
+                        data2['id'] = int(customerIds[i])
+
+                        data.append(data2)
+                        count = count+1
+
+            if len(invalidItems) > 0:
+                json_data = json.dumps({"Customers": data, "InvalidItems": invalidItems})
+            else:    
+                json_data = json.dumps({"Customers": data})
+                
+            self.write(json_data)  
 
 
 class CustomerSalesMap(tornado.web.RequestHandler):
@@ -302,40 +319,52 @@ class CustomerSalesMap(tornado.web.RequestHandler):
         plot_data = json.loads(temp)
         
         customerId = int(plot_data['id'])
+        criteria = plot_data['type']
         ax1 = int(plot_data['xAxis'])
         ax2 = int(plot_data['yAxis'])
-        criteria = plot_data['type']
         
-        #customerIndex = np.where(selectedCustomerIndex2Id==customerId)[0][0]
-        customerIndex = np.where(EtailerSelectedCustomerIndex2Id==customerId)[0][0]
-        
-        
-        dimensions = np.array([1,1,1,1,0])
-        dimensions[ax1] = 0
-        dimensions[ax2] = 0
-
-        if criteria==1:
-            plotCriteria = 'sum'
+        if customerId not in EtailerSelectedCustomerIndex2Id:
+            self.write("Invalid Customer Id")
+        elif criteria not in [1,2]:
+            self.write("Invalid Type. Type must be 1 or 2.")
+        elif ax1 not in [0,1,2,3]:
+            self.write("Invalid Axis Value. Axis value must be 0,1,2 or 3.")
+        elif ax2 not in [0,1,2,3]:
+            self.write("Invalid Axis Value. Axis value must be 0,1,2 or 3.")
+        elif ax1 == ax2:
+            self.write("Invalid Axis Values. Axis values must be different from each other.")
         else:
-            plotCriteria = 'binary'
         
-        X = loadFundamentalTensorCustomer('files/Etailer_AllHours_Item_Customer_Tensor_1000.mat', customerIndex, 24)
-        X = collapseTensor(X, dimensions, plotCriteria)
-        
-        plt.figure
-        plotTitle = "Sales of Customer %d" % customerId
-        if ax1 < ax2:
-            plotTensor(X, numPlots=1, title=plotTitle, figsize=(8, 6))
-        else: 
-            plotTensorTr(X, numPlots=1, title=plotTitle, figsize=(8, 6))
-        plt.savefig('./files/%d_%d_%d_%d.png' % (customerId,ax1,ax2,criteria))
+            customerIndex = np.where(EtailerSelectedCustomerIndex2Id==customerId)[0][0]
+            
+            if criteria==1:
+                plotCriteria = 'sum'
+            else:
+                plotCriteria = 'binary'
+            
+            dimensions = np.array([1,1,1,1,0])
+            dimensions[ax1] = 0
+            dimensions[ax2] = 0
+                            
 
-        imageUrl = ("45.55.237.86:%s/files/%d_%d_%d_%d.png" % (PORT,customerId,ax1,ax2,criteria))
-        
-        info = json.dumps({"image_url": imageUrl})
-        self.write("%s" % info)
+            X = loadFundamentalTensorCustomer('files/Etailer_AllHours_Item_Customer_Tensor_1000.mat', customerIndex, 24)
+            X = collapseTensor(X, dimensions, plotCriteria)
 
+            plt.figure
+            plotTitle = "Sales of Customer %d" % customerId
+            if ax1 < ax2:
+                plotTensor(X, numPlots=1, title=plotTitle, figsize=(8, 6))
+            else: 
+                plotTensorTr(X, numPlots=1, title=plotTitle, figsize=(8, 6))
+            plt.savefig('./files/%d_%d_%d_%d.png' % (customerId,ax1,ax2,criteria))
 
+            imageUrl = ("45.55.237.86:%s/files/%d_%d_%d_%d.png" % (PORT,customerId,ax1,ax2,criteria))
+
+            info = json.dumps({"image_url": imageUrl})
+            self.write("%s" % info)
+
+# localhost:8880/similarCustomers?jsonData={"id": 90412, "xAxis":0,"yAxis":2,"type":1,"distanceType":0,"Count":10,"MinPercentage":50}
+             
 class similarCustomers(tornado.web.RequestHandler):
     def set_default_headers(self):
         self.set_header("Access-Control-Allow-Origin", "*")
@@ -347,41 +376,98 @@ class similarCustomers(tornado.web.RequestHandler):
         temp = self.get_argument('jsonData')
         similar_data = json.loads(temp)
         
+
         customerId = int(similar_data['id'])
-        ax1 = int(similar_data['xAxis'])
-        ax2 = int(similar_data['yAxis'])
-        criteria = similar_data['type']
-        
         numCustomers = similar_data['Count']
         minPercentage = similar_data['MinPercentage']
         
-        customerIndex = np.where(EtailerSelectedCustomerIndex2Id==customerId)[0][0]
+        criteria = similar_data['type']
+        ax1 = int(similar_data['xAxis'])
+        ax2 = int(similar_data['yAxis'])
         
-        # synthetic data
-        percentages = np.random.randint(100, size=(numCustomers)) + 1
-        indices = np.argsort(percentages,axis=0)[::-1].flatten()
-        percentages = np.sort(percentages,axis=0)[::-1].flatten()
-
-        customerIndices = np.random.randint(1000, size=(numCustomers)) + 1
-        customerIds = EtailerSelectedCustomerIndex2Id[customerIndices]
+        distanceType = similar_data['distanceType']
         
-        count = 0
-        data = []
-        for i in range(len(customerIds)):
-            if count < numCustomers:
-                if int(percentages[i])>= minPercentage:
-                    data2 = {}
-                    data2['percentage'] = int(percentages[i])
-                    data2['id'] = int(customerIds[i])
-
-                    data.append(data2)
-                    count = count+1
+        if customerId not in EtailerSelectedCustomerIndex2Id:
+            self.write("Invalid Customer Id")
+        elif numCustomers<1:
+            self.write("Invalid count. Count must be more than 0.")
+        elif minPercentage>100:
+            self.write("Invalid percentage. Minimum percentage must less than or equal to 100.")
+        elif criteria not in [1,2]:
+            self.write("Invalid Type. Type must be 1 or 2.")
+        elif ax1 not in [0,1,2,3]:
+            self.write("Invalid Axis Value. Axis value must be 0,1,2 or 3.")
+        elif ax2 not in [0,1,2,3]:
+            self.write("Invalid Axis Value. Axis value must be 0,1,2 or 3.")
+        elif ax1 == ax2:
+            self.write("Invalid Axis Values. Axis values must be different from each other.")
+        elif distanceType not in [0,1,2,3]:
+            self.write("Invalid Distance Type. Distance type must be 0,1,2 or 3.")
+        else:
+        
+            customerIndex = np.where(EtailerSelectedCustomerIndex2Id==customerId)[0][0]
             
-        json_data = json.dumps({"Customers": data})
-        self.write(json_data)  
+            if criteria==1:
+                plotCriteria = 'sum'
+            else:
+                plotCriteria = 'binary'
+                
+            if distanceType==0:
+                metric = 'kl'
+            elif distanceType==1:
+                metric = 'is'
+            elif distanceType==2:
+                metric = 'hel'
+            else:
+                metric = 'euc'
 
-        
-        
+            dimensions = np.array([1,1,1,1,0])
+            dimensions[ax1] = 0
+            dimensions[ax2] = 0
+            
+            X = loadFundamentalTensorCustomer('files/Etailer_AllHours_Item_Customer_Tensor_1000.mat', customerIndex, 24)
+            X = collapseTensor(X, dimensions, plotCriteria)
+
+            distances = np.zeros(1000)
+            for i in range(1000):
+                cust = loadFundamentalTensorCustomer('files/Etailer_AllHours_Item_Customer_Tensor_1000.mat', i, 24)
+                cust = collapseTensor(cust, dimensions, plotCriteria)
+                
+                distances[i] = distance(X, cust, metric)
+                
+            distances = distances + np.ones((1000))
+            #distances[customerIndex] = distances.max()+1
+            
+            indices = distances.argsort()[::-1]
+            sortedDistances = np.sort(distances)[::-1]
+            percentages = sortedDistances * 100 / np.max(sortedDistances)
+            customerIds = EtailerSelectedCustomerIndex2Id[indices]
+
+            # synthetic data
+            #percentages = np.random.randint(100, size=(numCustomers)) + 1
+            #indices = np.argsort(percentages,axis=0)[::-1].flatten()
+            #percentages = np.sort(percentages,axis=0)[::-1].flatten()
+
+            #customerIndices = np.random.randint(1000, size=(numCustomers)) + 1
+            #customerIds = EtailerSelectedCustomerIndex2Id[customerIndices]
+
+            count = 0
+            data = []
+            for i in range(len(customerIds)):
+                if count < numCustomers:
+                    if int(percentages[i])>= minPercentage:
+                        data2 = {}
+                        data2['percentage'] = int(percentages[i])
+                        data2['id'] = int(customerIds[i])
+
+                        data.append(data2)
+                        count = count+1
+
+            json_data = json.dumps({"Customers": data})
+            self.write(json_data)  
+
+            global tempIndices
+            tempIndices = indices
 
 # The configuration of routes.
 routes_config = [

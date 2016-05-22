@@ -1,3 +1,4 @@
+# %load NMF.py
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -43,6 +44,6 @@ def nmf(V,B, maxIter, rank):
     tempA = A + np.ones((s1,rank))
     sortedA = np.sort(tempA,axis=0)[::-1].flatten()
     
-    percentages = sortedA * 100 * np.min(tempA) / np.max(tempA)
+    percentages = sortedA * 100 / np.max(tempA)
     
     return (VHat, errors, B, A, indices, percentages)
