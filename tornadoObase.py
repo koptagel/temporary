@@ -78,8 +78,9 @@ class MainPage(tornado.web.RequestHandler):
         
     def post(self):
         self.write('<html><head><h1> Obase Tornado Server </h1></head>'
-                   '<body> Son Guncelleme: 22.05.2016 17:30 <br><br>'
-                   '* similarCustomers fonksiyonun input yapisi degistirildi. Arka plandaki kod artik calisiyor. Fakat fonksiyonun calisma suresi biraz uzun. <br><br>'
+                   '<body> Son Guncelleme: 23.05.2016 12:00 <br><br>'
+                   '* similarCustomers fonksiyonun arka planda calisan kodu degistirildi. Artik daha hizli calisiyor. <br><br>'
+                   '* similarCustomers fonksiyonun input yapisi degistirildi.<br><br>'
                    '<h2> Genel Kullanim </h2>'
                    '45.55.237.86:8880/<b>FonksiyonIsmi</b>?jsonData=<b>JsonInputu</b> <br><br>'
                    'Asagida listelenen butun fonksiyonlarda veriler Json formatinda alinip, sonuclar Json formatinda geri dondurulecektir. <br>'
@@ -370,7 +371,7 @@ class CustomerSalesMap(tornado.web.RequestHandler):
 
 # localhost:8880/similarCustomers?jsonData={"id": 90412, "xAxis":0,"yAxis":2,"type":1,"distanceType":0,"Count":10,"MinPercentage":50}
              
-class similarCustomers2(tornado.web.RequestHandler):
+class similarCustomers(tornado.web.RequestHandler):
     def set_default_headers(self):
         self.set_header("Access-Control-Allow-Origin", "*")
         
@@ -479,7 +480,7 @@ class similarCustomers2(tornado.web.RequestHandler):
             global tempIndices
             tempIndices = indices
             
-class similarCustomers(tornado.web.RequestHandler):
+class similarCustomers2(tornado.web.RequestHandler):
     def set_default_headers(self):
         self.set_header("Access-Control-Allow-Origin", "*")
         
