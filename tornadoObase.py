@@ -20,6 +20,7 @@ import matplotlib.pyplot as plt
 from loadFundamentalTensor import clearIrrelevantKeys
 from loadFundamentalTensor import loadFundamentalTensor
 from loadFundamentalTensor import loadFundamentalTensorCustomer
+from loadFundamentalTensor import loadViewCustomer
 from collapseTensor import collapseTensor
 from plotTensor import plotTensor
 from plotTensor import plotTensorTr
@@ -369,6 +370,115 @@ class CustomerSalesMap(tornado.web.RequestHandler):
 
 # localhost:8880/similarCustomers?jsonData={"id": 90412, "xAxis":0,"yAxis":2,"type":1,"distanceType":0,"Count":10,"MinPercentage":50}
              
+class similarCustomers2(tornado.web.RequestHandler):
+    def set_default_headers(self):
+        self.set_header("Access-Control-Allow-Origin", "*")
+        
+    def get(self, *args):
+        self.post(*args)
+        
+    def post(self, *args):
+        temp = self.get_argument('jsonData')
+        similar_data = json.loads(temp)
+        
+
+        customerId = int(similar_data['id'])
+        numCustomers = similar_data['Count']
+        minPercentage = similar_data['MinPercentage']
+        
+        criteria = similar_data['type']
+        ax1 = int(similar_data['xAxis'])
+        ax2 = int(similar_data['yAxis'])
+        
+        distanceType = similar_data['distanceType']
+        
+        if customerId not in EtailerSelectedCustomerIndex2Id:
+            self.write("Invalid Customer Id")
+        elif numCustomers<1:
+            self.write("Invalid count. Count must be more than 0.")
+        elif minPercentage>100:
+            self.write("Invalid percentage. Minimum percentage must less than or equal to 100.")
+        elif criteria not in [1,2]:
+            self.write("Invalid Type. Type must be 1 or 2.")
+        elif ax1 not in [0,1,2,3]:
+            self.write("Invalid Axis Value. Axis value must be 0,1,2 or 3.")
+        elif ax2 not in [0,1,2,3]:
+            self.write("Invalid Axis Value. Axis value must be 0,1,2 or 3.")
+        elif ax1 == ax2:
+            self.write("Invalid Axis Values. Axis values must be different from each other.")
+        elif distanceType not in [0,1,2,3]:
+            self.write("Invalid Distance Type. Distance type must be 0,1,2 or 3.")
+        else:
+        
+            customerIndex = np.where(EtailerSelectedCustomerIndex2Id==customerId)[0][0]
+    
+                
+            if distanceType==0:
+                metric = 'kl'
+            elif distanceType==1:
+                metric = 'is'
+            elif distanceType==2:
+                metric = 'hel'
+            else:
+                metric = 'euc'
+
+            dimensions = np.array([1,1,1,1,0])
+            dimensions[ax1] = 0
+            dimensions[ax2] = 0
+            
+            
+            if (dimensions==np.array([0,0,1,1,0])).all():
+                filename = 'wdc.mat'
+            elif (dimensions==np.array([0,1,0,1,0])).all():
+                filename = 'whc.mat'
+            elif (dimensions==np.array([0,1,1,0,0])).all():
+                filename = 'wic.mat'
+            elif (dimensions==np.array([1,0,0,1,0])).all():
+                filename = 'dhc.mat'
+            elif (dimensions==np.array([1,0,1,0,0])).all():
+                filename = 'dic.mat'
+            else:
+                filename = 'hic.mat'
+                
+
+            X = loadViewCustomer(filename,customerIndex)
+            if criteria == 2: #binary
+                X[np.where(X>0)]=1
+
+            distances = np.zeros(1000)
+            for i in range(1000):
+                cust = loadViewCustomer(filename,i)
+                if criteria == 2: #binary
+                    cust[np.where(cust>0)]=1
+
+                distances[i] = distance(X, cust, metric)
+                
+            distances = distances + np.ones((1000))
+            
+            indices = distances.argsort()[::-1]
+            sortedDistances = np.sort(distances)[::-1]
+            percentages = sortedDistances * 100 / np.max(sortedDistances)
+            customerIds = EtailerSelectedCustomerIndex2Id[indices]
+
+            
+            count = 0
+            data = []
+            for i in range(len(customerIds)):
+                if count < numCustomers:
+                    if int(percentages[i])>= minPercentage:
+                        data2 = {}
+                        data2['percentage'] = int(percentages[i])
+                        data2['id'] = int(customerIds[i])
+
+                        data.append(data2)
+                        count = count+1
+
+            json_data = json.dumps({"Customers": data})
+            self.write(json_data)  
+
+            global tempIndices
+            tempIndices = indices
+            
 class similarCustomers(tornado.web.RequestHandler):
     def set_default_headers(self):
         self.set_header("Access-Control-Allow-Origin", "*")
@@ -429,6 +539,8 @@ class similarCustomers(tornado.web.RequestHandler):
             dimensions[ax1] = 0
             dimensions[ax2] = 0
             
+            
+            
             X = loadFundamentalTensorCustomer('files/Etailer_AllHours_Item_Customer_Tensor_1000.mat', customerIndex, 24)
             X = collapseTensor(X, dimensions, plotCriteria)
 
@@ -471,8 +583,9 @@ class similarCustomers(tornado.web.RequestHandler):
             self.write(json_data)  
 
             global tempIndices
-            tempIndices = indices
+            tempIndices = indices            
 
+            
 # The configuration of routes.
 routes_config = [
     (r"/", MainPage), 
@@ -482,6 +595,7 @@ routes_config = [
     (r"/customersOfProfile", CustomersOfProfile),
     (r"/customerSalesMap", CustomerSalesMap),
     (r"/similarCustomers", similarCustomers),
+    (r"/similarCustomers2", similarCustomers2),
     (r"/(.*\.png)", tornado.web.StaticFileHandler,{"path": "." }),
 ]
 application = tornado.web.Application(routes_config)

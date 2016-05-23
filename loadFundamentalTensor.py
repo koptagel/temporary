@@ -1,3 +1,4 @@
+# %load loadFundamentalTensor.py
 
 import scipy.io as sio
 import numpy as np
@@ -82,3 +83,10 @@ def loadFundamentalTensorCustomer(filename, customerIndex, numHour):
     newX = np.reshape(X[0:numWeek*numDow*numHour,:,:],(numWeek,numDow,numHour,numItems,1))
     
     return newX
+
+
+def loadViewCustomer(filename, customerIndex):
+    tempX = sio.loadmat(filename)
+    custView = tempX['data'][:,:,:,:,customerIndex,None]
+    
+    return custView
