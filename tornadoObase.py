@@ -81,9 +81,8 @@ class MainPage(tornado.web.RequestHandler):
         
     def post(self):
         self.write('<html><head><h1> Obase Tornado Server </h1></head>'
-                   '<body> Son Guncelleme: 23.05.2016 12:00 <br><br>'
-                   '* similarCustomers fonksiyonun arka planda calisan kodu degistirildi. Artik daha hizli calisiyor. <br><br>'
-                   '* similarCustomers fonksiyonun input yapisi degistirildi.<br><br>'
+                   '<body> Son Guncelleme: 25.05.2016 10:45 <br><br>'
+                   '* similarCustomers fonksiyonun arka planda calisan kodu degistirildi. <br><br>'
                    '<h2> Genel Kullanim </h2>'
                    '45.55.237.86:8880/<b>FonksiyonIsmi</b>?jsonData=<b>JsonInputu</b> <br><br>'
                    'Asagida listelenen butun fonksiyonlarda veriler Json formatinda alinip, sonuclar Json formatinda geri dondurulecektir. <br>'
