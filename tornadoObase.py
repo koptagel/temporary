@@ -69,6 +69,9 @@ productList = ["Cips", "Fistik", "Kola"]
 global tempIndices
 tempIndices = np.zeros((1000))
 
+global tempRes
+tempRes = np.zeros((1000))
+
 ############ HTML CLASSES ##############
 
 # Code segment that will bu used in the landing page. Gives examples of how-to-use the functionalities. 
@@ -429,17 +432,17 @@ class similarCustomers(tornado.web.RequestHandler):
             
             
             if (dimensions==np.array([0,0,1,1,0])).all():
-                filename = 'wdc.mat'
+                filename = 'files/wdc.mat'
             elif (dimensions==np.array([0,1,0,1,0])).all():
-                filename = 'whc.mat'
+                filename = 'files/whc.mat'
             elif (dimensions==np.array([0,1,1,0,0])).all():
-                filename = 'wic.mat'
+                filename = 'files/wic.mat'
             elif (dimensions==np.array([1,0,0,1,0])).all():
-                filename = 'dhc.mat'
+                filename = 'files/dhc.mat'
             elif (dimensions==np.array([1,0,1,0,0])).all():
-                filename = 'dic.mat'
+                filename = 'files/dic.mat'
             else:
-                filename = 'hic.mat'
+                filename = 'files/hic.mat'
                 
 
             X = loadViewCustomer(filename,customerIndex)
@@ -454,11 +457,22 @@ class similarCustomers(tornado.web.RequestHandler):
 
                 distances[i] = distance(X, cust, metric)
                 
-            distances = distances + np.ones((1000))
+            global tempRes
+            tempRes = distances
+                
+            #distances = distances + np.ones((1000))
+            #beta = 0.1
+            #distances = np.exp(-beta * distances)
             
-            indices = distances.argsort()[::-1]
-            sortedDistances = np.sort(distances)[::-1]
-            percentages = sortedDistances * 100 / np.max(sortedDistances)
+            indices = distances.argsort()
+            sortedDistances = np.sort(distances)
+            sortedDistances = - sortedDistances
+            percentages = (100 * np.ones(1000)) - ( sortedDistances * 100 / np.min(sortedDistances) )
+
+            
+            #indices = distances.argsort()[::-1]
+            #sortedDistances = np.sort(distances)[::-1]
+            #percentages = sortedDistances * 100 / np.max(sortedDistances)
             customerIds = EtailerSelectedCustomerIndex2Id[indices]
 
             
@@ -552,12 +566,19 @@ class similarCustomers2(tornado.web.RequestHandler):
                 
                 distances[i] = distance(X, cust, metric)
                 
-            distances = distances + np.ones((1000))
+            indices = distances.argsort()
+            sortedDistances = np.sort(distances)
+            sortedDistances = - sortedDistances
+            percentages = (100 * np.ones(1000)) - ( sortedDistances * 100 / min(sortedDistances) )
+
+
+            #distances = distances + np.ones((1000))
             #distances[customerIndex] = distances.max()+1
+
             
-            indices = distances.argsort()[::-1]
-            sortedDistances = np.sort(distances)[::-1]
-            percentages = sortedDistances * 100 / np.max(sortedDistances)
+            #indices = distances.argsort()[::-1]
+            #sortedDistances = np.sort(distances)[::-1]
+            #percentages = sortedDistances * 100 / np.max(sortedDistances)
             customerIds = EtailerSelectedCustomerIndex2Id[indices]
 
             # synthetic data
@@ -586,7 +607,7 @@ class similarCustomers2(tornado.web.RequestHandler):
             global tempIndices
             tempIndices = indices            
 
-            
+
 # The configuration of routes.
 routes_config = [
     (r"/", MainPage), 
@@ -611,3 +632,6 @@ def start():
 
 if __name__ == "__main__":
     start()
+
+    
+# localhost:8880/similarCustomers?jsonData={"id": 943073,"xAxis":1,"yAxis": 2,"type": 2,"distanceType":0,"Count":15,"MinPercentage":0}
