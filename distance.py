@@ -1,3 +1,4 @@
+# %load distance.py
 
 import numpy as np
 
@@ -35,6 +36,13 @@ def distance(P, Q, div='euc'):
         dist = np.sum( P/Q - np.log(P/Q) - 1 )
     elif div is 'hel':
         dist = (1/np.sqrt(2)) * np.sqrt( np.sum( np.power(( np.sqrt(P) - np.sqrt(Q)), 2) )) 
+    elif div is 'man':
+        dist = np.sum( np.abs(P-Q) )
+    elif div is 'ham':
+        dist = 0 
+        for i in range(len(P)):
+            if P[i] != Q[i]:
+                dist = dist + 1
     else: # 'euc'
         dist = np.sum( (1/2) * np.power((P-Q),2) )
         

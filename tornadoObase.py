@@ -24,6 +24,7 @@ from loadFundamentalTensor import loadViewCustomer
 from collapseTensor import collapseTensor
 from plotTensor import plotTensor
 from plotTensor import plotTensorTr
+from plotTensor import plotBarChart
 from NMF import nmf
 from distance import distance
 
@@ -72,6 +73,12 @@ tempIndices = np.zeros((1000))
 global tempRes
 tempRes = np.zeros((1000))
 
+global tempPerc
+tempPerc = np.zeros((1000))
+
+global Dist
+Dist = np.zeros((1000))
+
 ############ HTML CLASSES ##############
 
 # Code segment that will bu used in the landing page. Gives examples of how-to-use the functionalities. 
@@ -81,7 +88,9 @@ class MainPage(tornado.web.RequestHandler):
         
     def post(self):
         self.write('<html><head><h1> Obase Tornado Server </h1></head>'
-                   '<body> Son Guncelleme: 25.05.2016 10:45 <br><br>'
+                   '<body> Son Guncelleme: 01.06.2016 14:30 <br><br>'
+                   '* customerSalesMap fonksiyonuna bar chart eklendi. Artık xAxis ve yAxis değeri aynı sayı olarak verilebiliyor. <br>'
+                   '* similarCustomers fonksiyonu bar chartlar için de yapılabiliyor. Bunun için xAxis ve yAxis değerlerinin aynı sayı olması gerekiyor. <br>'
                    '* similarCustomers fonksiyonun arka planda calisan kodu degistirildi. <br><br>'
                    '<h2> Genel Kullanim </h2>'
                    '45.55.237.86:8880/<b>FonksiyonIsmi</b>?jsonData=<b>JsonInputu</b> <br><br>'
@@ -339,8 +348,8 @@ class CustomerSalesMap(tornado.web.RequestHandler):
             self.write("Invalid Axis Value. Axis value must be 0,1,2 or 3.")
         elif ax2 not in [0,1,2,3]:
             self.write("Invalid Axis Value. Axis value must be 0,1,2 or 3.")
-        elif ax1 == ax2:
-            self.write("Invalid Axis Values. Axis values must be different from each other.")
+        #elif ax1 == ax2:
+        #    self.write("Invalid Axis Values. Axis values must be different from each other.")
         else:
         
             customerIndex = np.where(EtailerSelectedCustomerIndex2Id==customerId)[0][0]
@@ -362,6 +371,8 @@ class CustomerSalesMap(tornado.web.RequestHandler):
             plotTitle = "Sales of Customer %d" % customerId
             if ax1 < ax2:
                 plotTensor(X, numPlots=1, title=plotTitle, figsize=(8, 6))
+            elif ax1 == ax2:
+                plotBarChart(X, numPlots=1, title=plotTitle, figsize=(8, 6))
             else: 
                 plotTensorTr(X, numPlots=1, title=plotTitle, figsize=(8, 6))
             plt.savefig('./files/%d_%d_%d_%d.png' % (customerId,ax1,ax2,criteria))
@@ -407,8 +418,8 @@ class similarCustomers(tornado.web.RequestHandler):
             self.write("Invalid Axis Value. Axis value must be 0,1,2 or 3.")
         elif ax2 not in [0,1,2,3]:
             self.write("Invalid Axis Value. Axis value must be 0,1,2 or 3.")
-        elif ax1 == ax2:
-            self.write("Invalid Axis Values. Axis values must be different from each other.")
+        #elif ax1 == ax2:
+        #    self.write("Invalid Axis Values. Axis values must be different from each other.")
         elif distanceType not in [0,1,2,3]:
             self.write("Invalid Distance Type. Distance type must be 0,1,2 or 3.")
         else:
@@ -424,35 +435,41 @@ class similarCustomers(tornado.web.RequestHandler):
                 metric = 'hel'
             else:
                 metric = 'euc'
+                
+            if criteria == 2:
+                plotCriteria = 'binary'
+            else:
+                plotCriteria = 'sum'
+                
+                
 
             dimensions = np.array([1,1,1,1,0])
             dimensions[ax1] = 0
             dimensions[ax2] = 0
             
             
-            if (dimensions==np.array([0,0,1,1,0])).all():
+            if (dimensions==np.array([0,0,1,1,0])).all() or (dimensions==np.array([0,1,1,1,0])).all():
                 filename = 'files/wdc.mat'
             elif (dimensions==np.array([0,1,0,1,0])).all():
                 filename = 'files/whc.mat'
             elif (dimensions==np.array([0,1,1,0,0])).all():
                 filename = 'files/wic.mat'
-            elif (dimensions==np.array([1,0,0,1,0])).all():
+            elif (dimensions==np.array([1,0,0,1,0])).all() or (dimensions==np.array([1,0,1,1,0])).all() or (dimensions==np.array([1,1,0,1,0])).all():
                 filename = 'files/dhc.mat'
-            elif (dimensions==np.array([1,0,1,0,0])).all():
+            elif (dimensions==np.array([1,0,1,0,0])).all() or (dimensions==np.array([1,1,1,0,0])).all():
                 filename = 'files/dic.mat'
             else:
                 filename = 'files/hic.mat'
                 
-
+                
             X = loadViewCustomer(filename,customerIndex)
-            if criteria == 2: #binary
-                X[np.where(X>0)]=1
+            X = collapseTensor(X, dimensions, plotCriteria)
 
+            
             distances = np.zeros(1000)
             for i in range(1000):
                 cust = loadViewCustomer(filename,i)
-                if criteria == 2: #binary
-                    cust[np.where(cust>0)]=1
+                cust = collapseTensor(cust, dimensions, plotCriteria)
 
                 distances[i] = distance(X, cust, metric)
                 
@@ -463,15 +480,12 @@ class similarCustomers(tornado.web.RequestHandler):
             #beta = 0.1
             #distances = np.exp(-beta * distances)
             
+            
             indices = distances.argsort()
             sortedDistances = np.sort(distances)
             sortedDistances = - sortedDistances
             percentages = (100 * np.ones(1000)) - ( sortedDistances * 100 / np.min(sortedDistances) )
 
-            
-            #indices = distances.argsort()[::-1]
-            #sortedDistances = np.sort(distances)[::-1]
-            #percentages = sortedDistances * 100 / np.max(sortedDistances)
             customerIds = EtailerSelectedCustomerIndex2Id[indices]
 
             
@@ -493,118 +507,12 @@ class similarCustomers(tornado.web.RequestHandler):
             global tempIndices
             tempIndices = indices
             
-class similarCustomers2(tornado.web.RequestHandler):
-    def set_default_headers(self):
-        self.set_header("Access-Control-Allow-Origin", "*")
-        
-    def get(self, *args):
-        self.post(*args)
-        
-    def post(self, *args):
-        temp = self.get_argument('jsonData')
-        similar_data = json.loads(temp)
-        
-
-        customerId = int(similar_data['id'])
-        numCustomers = similar_data['Count']
-        minPercentage = similar_data['MinPercentage']
-        
-        criteria = similar_data['type']
-        ax1 = int(similar_data['xAxis'])
-        ax2 = int(similar_data['yAxis'])
-        
-        distanceType = similar_data['distanceType']
-        
-        if customerId not in EtailerSelectedCustomerIndex2Id:
-            self.write("Invalid Customer Id")
-        elif numCustomers<1:
-            self.write("Invalid count. Count must be more than 0.")
-        elif minPercentage>100:
-            self.write("Invalid percentage. Minimum percentage must less than or equal to 100.")
-        elif criteria not in [1,2]:
-            self.write("Invalid Type. Type must be 1 or 2.")
-        elif ax1 not in [0,1,2,3]:
-            self.write("Invalid Axis Value. Axis value must be 0,1,2 or 3.")
-        elif ax2 not in [0,1,2,3]:
-            self.write("Invalid Axis Value. Axis value must be 0,1,2 or 3.")
-        elif ax1 == ax2:
-            self.write("Invalid Axis Values. Axis values must be different from each other.")
-        elif distanceType not in [0,1,2,3]:
-            self.write("Invalid Distance Type. Distance type must be 0,1,2 or 3.")
-        else:
-        
-            customerIndex = np.where(EtailerSelectedCustomerIndex2Id==customerId)[0][0]
+            global tempPerc
+            tempPerc = percentages
             
-            if criteria==1:
-                plotCriteria = 'sum'
-            else:
-                plotCriteria = 'binary'
-                
-            if distanceType==0:
-                metric = 'kl'
-            elif distanceType==1:
-                metric = 'is'
-            elif distanceType==2:
-                metric = 'hel'
-            else:
-                metric = 'euc'
+            global Dist
+            Dist = distances
 
-            dimensions = np.array([1,1,1,1,0])
-            dimensions[ax1] = 0
-            dimensions[ax2] = 0
-            
-            
-            
-            X = loadFundamentalTensorCustomer('files/Etailer_AllHours_Item_Customer_Tensor_1000.mat', customerIndex, 24)
-            X = collapseTensor(X, dimensions, plotCriteria)
-
-            distances = np.zeros(1000)
-            for i in range(1000):
-                cust = loadFundamentalTensorCustomer('files/Etailer_AllHours_Item_Customer_Tensor_1000.mat', i, 24)
-                cust = collapseTensor(cust, dimensions, plotCriteria)
-                
-                distances[i] = distance(X, cust, metric)
-                
-            indices = distances.argsort()
-            sortedDistances = np.sort(distances)
-            sortedDistances = - sortedDistances
-            percentages = (100 * np.ones(1000)) - ( sortedDistances * 100 / min(sortedDistances) )
-
-
-            #distances = distances + np.ones((1000))
-            #distances[customerIndex] = distances.max()+1
-
-            
-            #indices = distances.argsort()[::-1]
-            #sortedDistances = np.sort(distances)[::-1]
-            #percentages = sortedDistances * 100 / np.max(sortedDistances)
-            customerIds = EtailerSelectedCustomerIndex2Id[indices]
-
-            # synthetic data
-            #percentages = np.random.randint(100, size=(numCustomers)) + 1
-            #indices = np.argsort(percentages,axis=0)[::-1].flatten()
-            #percentages = np.sort(percentages,axis=0)[::-1].flatten()
-
-            #customerIndices = np.random.randint(1000, size=(numCustomers)) + 1
-            #customerIds = EtailerSelectedCustomerIndex2Id[customerIndices]
-
-            count = 0
-            data = []
-            for i in range(len(customerIds)):
-                if count < numCustomers:
-                    if int(percentages[i])>= minPercentage:
-                        data2 = {}
-                        data2['percentage'] = int(percentages[i])
-                        data2['id'] = int(customerIds[i])
-
-                        data.append(data2)
-                        count = count+1
-
-            json_data = json.dumps({"Customers": data})
-            self.write(json_data)  
-
-            global tempIndices
-            tempIndices = indices            
 
 
 # The configuration of routes.
@@ -616,7 +524,6 @@ routes_config = [
     (r"/customersOfProfile", CustomersOfProfile),
     (r"/customerSalesMap", CustomerSalesMap),
     (r"/similarCustomers", similarCustomers),
-    (r"/similarCustomers2", similarCustomers2),
     (r"/(.*\.png)", tornado.web.StaticFileHandler,{"path": "." }),
 ]
 application = tornado.web.Application(routes_config)

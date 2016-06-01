@@ -234,3 +234,65 @@ def plotTensorTr(X, numPlots, title, figsize=(5, 3)):
             
     else:
         print('Invalid dimensions')
+        
+def plotBarChart(X, numPlots, title, figsize=(5, 3)):    
+    dimensions = np.array(X.shape)     
+    
+    notCollapsedIndices = np.where(dimensions>1)[0] 
+    dimensions[notCollapsedIndices] = 0
+    dimensions = dimensions[:-1]      
+ 
+    numCustomers = X.shape[4]
+    numPlots = min(numCustomers, numPlots)
+    
+    # Case 1 - X = numWeek x 1 x 1 x 1 x numCustomers
+    if np.array_equal(dimensions,[0,1,1,1]):
+        numWeek = X.shape[0]
+        
+        for idx in range(numPlots): 
+            fig = plt.figure(num=None, figsize=figsize, dpi=80, facecolor='w', edgecolor='k')
+         
+            plt.bar(np.arange(numWeek), X[:,0,0,0,idx])
+            plt.xlabel('Week')
+            plt.title(title)
+            plt.show()
+
+    # Case 2 - X = 1 x numDow x 1 x 1 x numCustomers
+    elif np.array_equal(dimensions,[1,0,1,1]):
+        numDow = X.shape[1]
+        
+        for idx in range(numPlots): 
+            fig = plt.figure(num=None, figsize=figsize, dpi=80, facecolor='w', edgecolor='k')
+         
+            plt.bar(np.arange(numDow), X[0,:,0,0,idx])
+            plt.xlabel('Day of Week')
+            plt.xticks(np.arange(7), ['Mo','Tu','We','Th','Fr','Sa','Su'])
+            plt.title(title)
+            plt.show()
+
+    # Case 3 - X = 1 x 1 x numHour x 1 x numCustomers
+    elif np.array_equal(dimensions,[1,1,0,1]):
+        numHour = X.shape[2]
+        
+        for idx in range(numPlots): 
+            fig = plt.figure(num=None, figsize=figsize, dpi=80, facecolor='w', edgecolor='k')
+         
+            plt.bar(np.arange(numHour), X[0,0,:,0,idx])
+            plt.xlabel('Hours')
+            plt.title(title)
+            plt.show()
+    
+    # Case 4 - X = 1 x 1 x 1 x numItem x numCustomers
+    elif np.array_equal(dimensions,[1,1,1,0]):
+        numItem = X.shape[3]
+        
+        for idx in range(numPlots): 
+            fig = plt.figure(num=None, figsize=figsize, dpi=80, facecolor='w', edgecolor='k')
+         
+            plt.bar(np.arange(numItem), X[0,0,0,:,idx])
+            plt.xlabel('Items')
+            plt.title(title)
+            plt.show()
+    
+    else:
+        print('Invalid dimensions')
