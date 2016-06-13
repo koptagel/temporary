@@ -27,7 +27,8 @@ from plotTensor import plotTensorTr
 from plotTensor import plotBarChart
 from NMF import nmf
 from distance import distance
-
+from weblog import webBrowseMatrix
+from weblog import webBrowseGraph
 
 # Setting host name, port number, directory name and the static path. 
 HOST = 'localhost'
@@ -513,6 +514,32 @@ class similarCustomers(tornado.web.RequestHandler):
             global Dist
             Dist = distances
 
+            
+class CustomerWeblogPlots(tornado.web.RequestHandler):
+    def set_default_headers(self):
+        self.set_header("Access-Control-Allow-Origin", "*")
+        
+    def get(self, *args):
+        self.post(*args)
+        
+    def post(self, *args):
+        temp = self.get_argument('jsonData')
+        plot_data = json.loads(temp)
+        
+        customerId = int(plot_data['id'])
+        
+        distances = webBrowseMatrix(customerId)
+        
+        if np.sum(distances) == 0:
+            self.write("Invalid Customer Id. This customer does not have weblog data.")
+        else:
+            webBrowseGraph(customerId,distances)
+
+            matrixUrl = ("45.55.237.86:%s/files/%d_webmatrix.png" % (PORT,customerId))
+            graphUrl = ("45.55.237.86:%s/files/%d_webgraph.png" % (PORT,customerId))
+
+            info = json.dumps({"image_url": matrixUrl, "image_url_graph": graphUrl})
+            self.write("%s" % info)
 
 
 # The configuration of routes.
@@ -524,6 +551,7 @@ routes_config = [
     (r"/customersOfProfile", CustomersOfProfile),
     (r"/customerSalesMap", CustomerSalesMap),
     (r"/similarCustomers", similarCustomers),
+    (r"/customerWeblog", CustomerWeblogPlots),
     (r"/(.*\.png)", tornado.web.StaticFileHandler,{"path": "." }),
 ]
 application = tornado.web.Application(routes_config)
