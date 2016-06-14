@@ -89,7 +89,9 @@ class MainPage(tornado.web.RequestHandler):
         
     def post(self):
         self.write('<html><head><h1> Obase Tornado Server </h1></head>'
-                   '<body> Son Guncelleme: 01.06.2016 14:30 <br><br>'
+                   '<body> Son Guncelleme: 14.06.2016 09:00 <br><br>'
+                   '* customerWeblog fonksiyonu eklendi. <br>'
+                   '* similarCustomers fonksiyonu outputuna onerilen urun listesi eklendi. Su anda urun listesi random olusturuluyor (gercek urun idleriyle). Ilerleyen gunlerde arka plandaki kod duzenlenecek. <br><br>'
                    '* customerSalesMap fonksiyonuna bar chart eklendi. Artık xAxis ve yAxis değeri aynı sayı olarak verilebiliyor. <br>'
                    '* similarCustomers fonksiyonu bar chartlar için de yapılabiliyor. Bunun için xAxis ve yAxis değerlerinin aynı sayı olması gerekiyor. <br>'
                    '* similarCustomers fonksiyonun arka planda calisan kodu degistirildi. <br><br>'
@@ -128,7 +130,8 @@ class MainPage(tornado.web.RequestHandler):
                    'Bu ornekte 90412 numarali musterinin haftalara ve saatlere gore yaptigi toplam harcama gosterilmektedir. <br><br>'
                    'Ornek olarak kullanilabilecek musteri idleri: 1073258, 999538, 1155093. <br><br>'
                    '<h3> similarCustomers </h3>'
-                   'Verilen musteri idsine, grafik kriterlerine, kisi sayisi, uzaklik tipine ve uygunluk sinirina gore, musteriye benzer olan diger musterilerin listesi ve benzerlik oranlari dondurulur. <br><br>'
+                   'Verilen musteri idsine, grafik kriterlerine, kisi sayisi, uzaklik tipine ve uygunluk sinirina gore, musteriye benzer olan diger musterilerin listesi, benzerlik oranlari ve diger musterilere onerilebilecek urun listesi dondurulur. <br>'
+                   'Su anda onerilen urun listesi random bicimde uretiliyor (gercek urun idleri ile). Ilerleyen gunlerde bu kisim degistirilecek. <br><br>'
                    'Grafik kriterlerinin alabilecegi degerler ve ifade ettikleri durumlar customerSalesMap fonksiyonundaki gibidir. <br>'
                    'Count ve MinPercentage parametrelerinin islevleri customersOfProfile fonksiyonundaki islevleriyle aynidir. <br><br>'
                    'distanceType parametresinin alabilecegi degerler ve ifade ettigi uzakliklar asagidaki gibidir.'
@@ -138,12 +141,16 @@ class MainPage(tornado.web.RequestHandler):
                    '<tr><td> KL(P,Q) = P * log(P/Q) - P + Q </td><td> IS(P,Q) = (P/Q) * log(P/Q) - 1 </td><td> H(P,Q) = (1/sqrt(2)) * sqrt((sqrt(P) - sqrt(Q))*(sqrt(P) - sqrt(Q))) </td><td> EUC(P,Q) = (1/2) * (P-Q) * (P-Q) </td></tr><br>'
                    '</table><br>'
                    '<b> Input: </b> 45.55.237.86:8880/<b>similarCustomers</b>?jsonData=<b>{"id": 1042240, "xAxis":1, "yAxis": 2, "type": 2, "distanceType": 0, "Count":5, "MinPercentage":60} </b><br>'
-                   '<b> Output: </b> {"Customers": [{"percentage":98, "id": 90361}, {"percentage":80, "id": 90412}, {"percentage":77, "id": 1073258}, {"percentage":65, "id": 2032979}]} <br>'  
+                   '<b> Output: </b> {"Customers": [{"percentage":98, "id": 90361}, {"percentage":80, "id": 90412}, {"percentage":77, "id": 1073258}, {"percentage":65, "id": 2032979}],"Products": [{"id": 31971}, {"id": 8926}, {"id": 11685}, {"id": 18109}]} <br>'  
                    'Bu ornekte 1042240 numarali musterinin alim aliskanligina (haftanin gunlerine ve saatlere gore, alisveris yapip yapmadigi) en cok benzerlik gosteren, profil uygunlugu %60in uzerinde olan maksimum 5 musteri listeleniyor. <br><br>'
                    'Ornek olarak kullanilabilecek musteri idleri: 1073258, 999538, 1155093. <br><br>'
+                   '<h3> customerWeblog </h3>'
+                   'Verilen musteri idsine gore, webdeki hareket grafiklerinin url bilgisi dondurulur. <br><br>'
+                   '<b> Input: </b> 45.55.237.86:8880/<b>customerWeblog</b>?jsonData=<b>{"id": 90412} </b><br>'
+                   '<b> Output: </b> {"image_url": "45.55.237.86:8880/files/90412_webmatrix.png","image_url_graph": "45.55.237.86:8880/files/90412_webgraph.png"} <br>'
+                   'Ornek olarak kullanilabilecek musteri idleri: 1073258, 999538. <br><br>'
                    '</body></html>')
         
-
 
 class DefineProfile(tornado.web.RequestHandler):
     def get(self):
@@ -502,9 +509,22 @@ class similarCustomers(tornado.web.RequestHandler):
                         data.append(data2)
                         count = count+1
 
-            json_data = json.dumps({"Customers": data})
-            self.write(json_data)  
+            #json_data = json.dumps({"Customers": data})
+            
+            productIndices = np.random.randint(6000, size=15)
+            productIds = itemIds[productIndices]
+            
+            productsData = []
+            for i in range(len(productIds)):
+                data2 = {}
+                data2['id'] = int(productIds[i])
+                productsData.append(data2)
 
+            json_data = json.dumps({"Customers": data, "Products": productsData})
+
+            self.write(json_data)  
+            
+            
             global tempIndices
             tempIndices = indices
             
