@@ -34,12 +34,14 @@ from weblog import webBrowseGraph
 HOST = 'localhost'
 PORT = 8880
 
+CUSTOMERCOUNT = 1000
+
 DIRNAME = os.path.dirname(os.path.realpath('__file__'))
 STATIC_PATH = os.path.join(DIRNAME, '.')
 
 # Creating global variables. 
 global EtailerSelectedCustomerIndex2Id
-EtailerSelectedCustomerIndex2Id = np.loadtxt('files/Etailer_customersIndex2Id_1000.txt', dtype='int')
+EtailerSelectedCustomerIndex2Id = np.loadtxt('files/Etailer_customersIndex2Id_%d.txt'%CUSTOMERCOUNT, dtype='int')
 
 global ItemIndex2IdGroup3
 ItemIndex2IdGroup3 = np.loadtxt('files/Etailer_ItemsIndex2IdGroup3.txt', dtype='int')
@@ -58,7 +60,7 @@ itemIdsGroup3 = np.loadtxt('files/Etailer_ItemIdsGroup3.txt', dtype='int')
 #EtailerMatrix = EtailerMatrix[0,0,0,:,:].T
 
 global EtailerMatrix
-EtailerMatrix = np.load("files/Etailer_Customers_Items_1000.npy")
+EtailerMatrix = np.load("files/Etailer_Customers_Items_%d.npy"%CUSTOMERCOUNT)
 
 
 
@@ -69,16 +71,16 @@ global productList
 productList = ["Cips", "Fistik", "Kola"]
 
 global tempIndices
-tempIndices = np.zeros((1000))
+tempIndices = np.zeros((CUSTOMERCOUNT))
 
 global tempRes
-tempRes = np.zeros((1000))
+tempRes = np.zeros((CUSTOMERCOUNT))
 
 global tempPerc
-tempPerc = np.zeros((1000))
+tempPerc = np.zeros((CUSTOMERCOUNT))
 
 global Dist
-Dist = np.zeros((1000))
+Dist = np.zeros((CUSTOMERCOUNT))
 
 ############ HTML CLASSES ##############
 
@@ -89,12 +91,11 @@ class MainPage(tornado.web.RequestHandler):
         
     def post(self):
         self.write('<html><head><h1> Obase Tornado Server </h1></head>'
-                   '<body> Son Guncelleme: 14.06.2016 09:00 <br><br>'
+                   '<body> Son Guncelleme: 20.06.2016 19:00 <br><br>'
+                   '* similarCustomers fonksiyonuna urun yuzde degerleri eklendi. <br>'
+                   'Su anda ekran gelistirilmesine devam edilebilmesi icin urun listesi ve yuzdeleri random olusturuluyor (gercek urun idleriyle). Ilerleyen gunlerde arka plandaki kod duzenlenecek.<br>'
+                   '* customerSalesMap fonksiyonuna weblog aktiviteleri eklendi. <br><br>'
                    '* customerWeblog fonksiyonu eklendi. <br>'
-                   '* similarCustomers fonksiyonu outputuna onerilen urun listesi eklendi. Su anda urun listesi random olusturuluyor (gercek urun idleriyle). Ilerleyen gunlerde arka plandaki kod duzenlenecek. <br><br>'
-                   '* customerSalesMap fonksiyonuna bar chart eklendi. Artık xAxis ve yAxis değeri aynı sayı olarak verilebiliyor. <br>'
-                   '* similarCustomers fonksiyonu bar chartlar için de yapılabiliyor. Bunun için xAxis ve yAxis değerlerinin aynı sayı olması gerekiyor. <br>'
-                   '* similarCustomers fonksiyonun arka planda calisan kodu degistirildi. <br><br>'
                    '<h2> Genel Kullanim </h2>'
                    '45.55.237.86:8880/<b>FonksiyonIsmi</b>?jsonData=<b>JsonInputu</b> <br><br>'
                    'Asagida listelenen butun fonksiyonlarda veriler Json formatinda alinip, sonuclar Json formatinda geri dondurulecektir. <br>'
@@ -116,15 +117,17 @@ class MainPage(tornado.web.RequestHandler):
                    'Verilen musteri idsine ve istenilen grafik kriterlerine gore, musteri haritasinin url bilgisi dondurulur. <br><br>'
                    'Grafik kriterlerinin alabilecegi degerler ve ifade ettikleri durumlar asagidaki tablolarda gosterilmistir. <br>'
                    'X ve Y Duzlemleri:'
-                   '<table border="1" width=300>'
-                   '<tr><td> 0 </td><td> 1 </td><td> 2 </td><td> 3 </td></tr><br>'
-                   '<tr><td> Hafta </td><td> Haftanin Gunu </td><td> Saat </td><td> Urun </td></tr><br>'
+                   '<table border="1" width=500>'
+                   '<tr><td> 0 </td><td> 1 </td><td> 2 </td><td> 3 </td><td> 4 </td><td> 5 </td></tr><br>'
+                   '<tr><td> Hafta </td><td> Haftanin Gunu </td><td> Saat </td><td> Urun </td><td> Weblog Matrix </td><td> Weblog Graph </td></tr><br>'
                    '</table><br>'
                    'Type:'
                    '<table border="1" width=500>'
                    '<tr><td> 1 </td><td> 2 </td></tr><br>'
                    '<tr><td> Toplam Satis Tutari </td><td> Satis yapilip yapilmadigi (0 veya 1 seklinde) </td></tr><br>'
                    '</table> <br>'
+                   'Musterilerin satis grafiklerinin bar chartlarini gorebilmek icin xAxis ve yAxis degerlerinin ayni sayi olmasi gerekli. <br>'
+                   'Musterilerin web aktivitelerinin grafiklerinin de xAxis ve yAxis degerlerinin ayni sayi olmasi gerekiyor. <br><br>'
                    '<b> Input: </b> 45.55.237.86:8880/<b>customerSalesMap</b>?jsonData=<b>{"id": 90412, "xAxis":0, "yAxis": 2, "type": 1} </b><br>'
                    '<b> Output: </b> {"image_url": "45.55.237.86:8880/files/90412_0_2_1.png"} <br>'
                    'Bu ornekte 90412 numarali musterinin haftalara ve saatlere gore yaptigi toplam harcama gosterilmektedir. <br><br>'
@@ -141,7 +144,7 @@ class MainPage(tornado.web.RequestHandler):
                    '<tr><td> KL(P,Q) = P * log(P/Q) - P + Q </td><td> IS(P,Q) = (P/Q) * log(P/Q) - 1 </td><td> H(P,Q) = (1/sqrt(2)) * sqrt((sqrt(P) - sqrt(Q))*(sqrt(P) - sqrt(Q))) </td><td> EUC(P,Q) = (1/2) * (P-Q) * (P-Q) </td></tr><br>'
                    '</table><br>'
                    '<b> Input: </b> 45.55.237.86:8880/<b>similarCustomers</b>?jsonData=<b>{"id": 1042240, "xAxis":1, "yAxis": 2, "type": 2, "distanceType": 0, "Count":5, "MinPercentage":60} </b><br>'
-                   '<b> Output: </b> {"Customers": [{"percentage":98, "id": 90361}, {"percentage":80, "id": 90412}, {"percentage":77, "id": 1073258}, {"percentage":65, "id": 2032979}],"Products": [{"id": 31971}, {"id": 8926}, {"id": 11685}, {"id": 18109}]} <br>'  
+                   '<b> Output: </b> {"Customers": [{"percentage":98, "id": 90361}, {"percentage":80, "id": 90412}, {"percentage":77, "id": 1073258}, {"percentage":65, "id": 2032979}],"Products": [{"percentage":97, "id": 31971}, {"percentage":83, "id": 8926}, {"percentage":76, "id": 11685}, {"percentage":75, "id": 18109}]} <br>'  
                    'Bu ornekte 1042240 numarali musterinin alim aliskanligina (haftanin gunlerine ve saatlere gore, alisveris yapip yapmadigi) en cok benzerlik gosteren, profil uygunlugu %60in uzerinde olan maksimum 5 musteri listeleniyor. <br><br>'
                    'Ornek olarak kullanilabilecek musteri idleri: 1073258, 999538, 1155093. <br><br>'
                    '<h3> customerWeblog </h3>'
@@ -352,9 +355,9 @@ class CustomerSalesMap(tornado.web.RequestHandler):
             self.write("Invalid Customer Id")
         elif criteria not in [1,2]:
             self.write("Invalid Type. Type must be 1 or 2.")
-        elif ax1 not in [0,1,2,3]:
+        elif ax1 not in [0,1,2,3,4,5]:
             self.write("Invalid Axis Value. Axis value must be 0,1,2 or 3.")
-        elif ax2 not in [0,1,2,3]:
+        elif ax2 not in [0,1,2,3,4,5]:
             self.write("Invalid Axis Value. Axis value must be 0,1,2 or 3.")
         #elif ax1 == ax2:
         #    self.write("Invalid Axis Values. Axis values must be different from each other.")
@@ -367,28 +370,46 @@ class CustomerSalesMap(tornado.web.RequestHandler):
             else:
                 plotCriteria = 'binary'
             
-            dimensions = np.array([1,1,1,1,0])
-            dimensions[ax1] = 0
-            dimensions[ax2] = 0
-                            
+            if ax1 in [0,1,2,3] and ax2 in [0,1,2,3]:
+                dimensions = np.array([1,1,1,1,0])
+                dimensions[ax1] = 0
+                dimensions[ax2] = 0
 
-            X = loadFundamentalTensorCustomer('files/Etailer_AllHours_Item_Customer_Tensor_1000.mat', customerIndex, 24)
-            X = collapseTensor(X, dimensions, plotCriteria)
 
-            plt.figure
-            plotTitle = "Sales of Customer %d" % customerId
-            if ax1 < ax2:
-                plotTensor(X, numPlots=1, title=plotTitle, figsize=(8, 6))
-            elif ax1 == ax2:
-                plotBarChart(X, numPlots=1, title=plotTitle, figsize=(8, 6))
-            else: 
-                plotTensorTr(X, numPlots=1, title=plotTitle, figsize=(8, 6))
-            plt.savefig('./files/%d_%d_%d_%d.png' % (customerId,ax1,ax2,criteria))
+                X = loadFundamentalTensorCustomer('files/Etailer_AllHours_Item_Customer_Tensor_%d.mat'%CUSTOMERCOUNT, customerIndex, 24)
+                X = collapseTensor(X, dimensions, plotCriteria)
 
-            imageUrl = ("45.55.237.86:%s/files/%d_%d_%d_%d.png" % (PORT,customerId,ax1,ax2,criteria))
+                plt.figure
+                plotTitle = "Sales of Customer %d" % customerId
+                if ax1 < ax2:
+                    plotTensor(X, numPlots=1, title=plotTitle, figsize=(8, 6))
+                elif ax1 == ax2:
+                    plotBarChart(X, numPlots=1, title=plotTitle, figsize=(8, 6))
+                else: 
+                    plotTensorTr(X, numPlots=1, title=plotTitle, figsize=(8, 6))
+                plt.savefig('./files/%d_%d_%d_%d.png' % (customerId,ax1,ax2,criteria))
 
-            info = json.dumps({"image_url": imageUrl})
-            self.write("%s" % info)
+                imageUrl = ("45.55.237.86:%s/files/%d_%d_%d_%d.png" % (PORT,customerId,ax1,ax2,criteria))
+
+                info = json.dumps({"image_url": imageUrl})
+                self.write("%s" % info)
+            
+            else:
+            
+                distances = webBrowseMatrix(customerId)
+        
+                if np.sum(distances) == 0:
+                    self.write("Invalid Customer Id. This customer does not have weblog data.")
+                else:
+                    webBrowseGraph(customerId,distances)
+                    
+                    if ax1 == 4:
+                        imageUrl = ("45.55.237.86:%s/files/%d_webmatrix.png" % (PORT,customerId))
+                    elif ax1 == 5:
+                        imageUrl = ("45.55.237.86:%s/files/%d_webgraph.png" % (PORT,customerId))
+
+                    info = json.dumps({"image_url": imageUrl})
+                    self.write("%s" % info)
 
 # localhost:8880/similarCustomers?jsonData={"id": 90412, "xAxis":0,"yAxis":2,"type":1,"distanceType":0,"Count":10,"MinPercentage":50}
              
@@ -457,25 +478,25 @@ class similarCustomers(tornado.web.RequestHandler):
             
             
             if (dimensions==np.array([0,0,1,1,0])).all() or (dimensions==np.array([0,1,1,1,0])).all():
-                filename = 'files/wdc.mat'
+                filename = 'files/wdc_%d.mat'%CUSTOMERCOUNT
             elif (dimensions==np.array([0,1,0,1,0])).all():
-                filename = 'files/whc.mat'
+                filename = 'files/whc_%d.mat'%CUSTOMERCOUNT
             elif (dimensions==np.array([0,1,1,0,0])).all():
-                filename = 'files/wic.mat'
+                filename = 'files/wic_%d.mat'%CUSTOMERCOUNT
             elif (dimensions==np.array([1,0,0,1,0])).all() or (dimensions==np.array([1,0,1,1,0])).all() or (dimensions==np.array([1,1,0,1,0])).all():
-                filename = 'files/dhc.mat'
+                filename = 'files/dhc_%d.mat'%CUSTOMERCOUNT
             elif (dimensions==np.array([1,0,1,0,0])).all() or (dimensions==np.array([1,1,1,0,0])).all():
-                filename = 'files/dic.mat'
+                filename = 'files/dic_%d.mat'%CUSTOMERCOUNT
             else:
-                filename = 'files/hic.mat'
+                filename = 'files/hic_%d.mat'%CUSTOMERCOUNT
                 
                 
             X = loadViewCustomer(filename,customerIndex)
             X = collapseTensor(X, dimensions, plotCriteria)
 
             
-            distances = np.zeros(1000)
-            for i in range(1000):
+            distances = np.zeros(CUSTOMERCOUNT)
+            for i in range(CUSTOMERCOUNT):
                 cust = loadViewCustomer(filename,i)
                 cust = collapseTensor(cust, dimensions, plotCriteria)
 
@@ -492,7 +513,7 @@ class similarCustomers(tornado.web.RequestHandler):
             indices = distances.argsort()
             sortedDistances = np.sort(distances)
             sortedDistances = - sortedDistances
-            percentages = (100 * np.ones(1000)) - ( sortedDistances * 100 / np.min(sortedDistances) )
+            percentages = (100 * np.ones(CUSTOMERCOUNT)) - ( sortedDistances * 100 / np.min(sortedDistances) )
 
             customerIds = EtailerSelectedCustomerIndex2Id[indices]
 
@@ -514,10 +535,14 @@ class similarCustomers(tornado.web.RequestHandler):
             productIndices = np.random.randint(6000, size=15)
             productIds = itemIds[productIndices]
             
+            productPercentages = np.random.randint(50, size=(15)) + 50
+            productPercentages = np.sort(productPercentages,axis=0)[::-1].flatten()
+            
             productsData = []
             for i in range(len(productIds)):
                 data2 = {}
                 data2['id'] = int(productIds[i])
+                data2['percentage'] = int(productPercentages[i])
                 productsData.append(data2)
 
             json_data = json.dumps({"Customers": data, "Products": productsData})
