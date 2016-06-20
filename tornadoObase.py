@@ -91,9 +91,10 @@ class MainPage(tornado.web.RequestHandler):
         
     def post(self):
         self.write('<html><head><h1> Obase Tornado Server </h1></head>'
-                   '<body> Son Guncelleme: 20.06.2016 19:00 <br><br>'
+                   '<body> Son Guncelleme: 20.06.2016 19:30 <br><br>'
                    '* similarCustomers fonksiyonuna urun yuzde degerleri eklendi. <br>'
                    'Su anda ekran gelistirilmesine devam edilebilmesi icin urun listesi ve yuzdeleri random olusturuluyor (gercek urun idleriyle). Ilerleyen gunlerde arka plandaki kod duzenlenecek.<br>'
+                   '* similarCustomers fonksiyonunun kriterlerine weblog secenegi eklendi. <br>'
                    '* customerSalesMap fonksiyonuna weblog aktiviteleri eklendi. <br><br>'
                    '* customerWeblog fonksiyonu eklendi. <br>'
                    '<h2> Genel Kullanim </h2>'
@@ -443,9 +444,9 @@ class similarCustomers(tornado.web.RequestHandler):
             self.write("Invalid percentage. Minimum percentage must less than or equal to 100.")
         elif criteria not in [1,2]:
             self.write("Invalid Type. Type must be 1 or 2.")
-        elif ax1 not in [0,1,2,3]:
+        elif ax1 not in [0,1,2,3,4,5]:
             self.write("Invalid Axis Value. Axis value must be 0,1,2 or 3.")
-        elif ax2 not in [0,1,2,3]:
+        elif ax2 not in [0,1,2,3,4,5]:
             self.write("Invalid Axis Value. Axis value must be 0,1,2 or 3.")
         #elif ax1 == ax2:
         #    self.write("Invalid Axis Values. Axis values must be different from each other.")
@@ -470,7 +471,11 @@ class similarCustomers(tornado.web.RequestHandler):
             else:
                 plotCriteria = 'sum'
                 
-                
+            
+            if ax1 in [4,5]:
+                ax1 = 1
+            if ax2 in [4,5]:
+                ax2 = 2
 
             dimensions = np.array([1,1,1,1,0])
             dimensions[ax1] = 0
