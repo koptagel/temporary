@@ -97,8 +97,9 @@ class MainPage(tornado.web.RequestHandler):
         
     def post(self):
         self.write('<html><head><h1> Obase Tornado Server </h1></head>'
-                   '<body> Son Guncelleme: 23.06.2016 16:45 <br><br>'
+                   '<body> Son Guncelleme: 23.06.2016 18:30 <br><br>'
                    '* similarCustomers fonksiyonunun inputlarında değişiklik yapıldı. Artık searchType ve Products değişkenlerinin de verilmesi gerekiyor. <br>'
+                   '* similarCustomers fonksiyonu belirli bir müşteri profilindeki benzer müşterileri bulacak şekilde düzenlendi. <br>'
                    '* similarCustomers ve customerSalesMap fonksiyonlarının arka plan kodlarında değişiklik yapıldı (web hareket verileri için). <br><br>'
                    '* similarCustomers fonksiyonuna urun yuzde degerleri eklendi. <br>'
                    'Su anda ekran gelistirilmesine devam edilebilmesi icin urun listesi ve yuzdeleri random olusturuluyor (gercek urun idleriyle). Ilerleyen gunlerde arka plandaki kod duzenlenecek.<br>'
@@ -536,9 +537,9 @@ class similarCustomers(tornado.web.RequestHandler):
                 if searchType == 0:
                     profileCustCount = CUSTOMERCOUNT
                     custIndexList = np.arange(CUSTOMERCOUNT)
-                else:
-                    #Change this part
                     
+                #Todo
+                else:
                     productList = similar_data['Products']
                     numProducts = len(productList)
 
@@ -555,11 +556,25 @@ class similarCustomers(tornado.web.RequestHandler):
                             data2 = {}
                             data2['id'] = int(pid)
                             invalidItems.append(data2)
-                            
+                       
                     
-                    #getCustomerIndicesOfProfile
-                    profileCustCount = CUSTOMERCOUNT
-                    custIndexList = np.arange(CUSTOMERCOUNT)
+                    global EtailerMatrix
+                    EtailerMatrix[np.where(EtailerMatrix>0)]=1
+                    
+                    s1,s2 = EtailerMatrix.shape
+                    rank = 1
+
+                    Z2 = np.zeros((rank,s2))
+                    Z2[0,itemIndex] = 1
+
+                    maxIter = 3
+
+                    _, _, _, _, indices, percentages = nmf(EtailerMatrix, Z2, maxIter, rank)
+                    customerIds = EtailerSelectedCustomerIndex2Id[indices]
+                    
+                    profileCustCount = 150
+                    custIndexList = indices[0:profileCustCount]
+                    
                 
                 distances = np.zeros(len(custIndexList))
                 for i in range(len(custIndexList)):
@@ -568,6 +583,7 @@ class similarCustomers(tornado.web.RequestHandler):
 
                     distances[i] = distance(X, cust, metric)
 
+                
                 global tempRes
                 tempRes = distances
 
@@ -579,7 +595,7 @@ class similarCustomers(tornado.web.RequestHandler):
             indices = distances.argsort()
             sortedDistances = np.sort(distances)
             sortedDistances = - sortedDistances
-            percentages = (100 * np.ones(CUSTOMERCOUNT)) - ( sortedDistances * 100 / np.min(sortedDistances) )
+            percentages = (100 * np.ones(len(custIndexList))) - ( sortedDistances * 100 / np.min(sortedDistances) )
 
             customerIds = []
             for i in range(len(custIndexList)):
