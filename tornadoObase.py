@@ -1,4 +1,5 @@
 # %load tornadoObase.py
+# %load tornadoObase.py
 
 # Including the required libraries .
 import tornado.ioloop
@@ -29,12 +30,16 @@ from NMF import nmf
 from distance import distance
 from weblog import webBrowseMatrix
 from weblog import webBrowseGraph
+from weblog import loadWeblogCustomer
+from weblog import plotWeblogMatrix
 
 # Setting host name, port number, directory name and the static path. 
 HOST = 'localhost'
 PORT = 8880
 
 CUSTOMERCOUNT = 1000
+
+MAX_INT = 2147483647
 
 DIRNAME = os.path.dirname(os.path.realpath('__file__'))
 STATIC_PATH = os.path.join(DIRNAME, '.')
@@ -86,17 +91,18 @@ Dist = np.zeros((CUSTOMERCOUNT))
 
 # Code segment that will bu used in the landing page. Gives examples of how-to-use the functionalities. 
 class MainPage(tornado.web.RequestHandler):
+
     def get(self):
         self.post()
         
     def post(self):
         self.write('<html><head><h1> Obase Tornado Server </h1></head>'
-                   '<body> Son Guncelleme: 20.06.2016 19:30 <br><br>'
+                   '<body> Son Guncelleme: 23.06.2016 16:00 <br><br>'
+                   '* similarCustomers ve customerSalesMap fonksiyonlarının arka plan kodlarında değişiklik yapıldı (web hareket verileri için). <br><br>'
                    '* similarCustomers fonksiyonuna urun yuzde degerleri eklendi. <br>'
                    'Su anda ekran gelistirilmesine devam edilebilmesi icin urun listesi ve yuzdeleri random olusturuluyor (gercek urun idleriyle). Ilerleyen gunlerde arka plandaki kod duzenlenecek.<br>'
                    '* similarCustomers fonksiyonunun kriterlerine weblog secenegi eklendi. <br>'
                    '* customerSalesMap fonksiyonuna weblog aktiviteleri eklendi. <br><br>'
-                   '* customerWeblog fonksiyonu eklendi. <br>'
                    '<h2> Genel Kullanim </h2>'
                    '45.55.237.86:8880/<b>FonksiyonIsmi</b>?jsonData=<b>JsonInputu</b> <br><br>'
                    'Asagida listelenen butun fonksiyonlarda veriler Json formatinda alinip, sonuclar Json formatinda geri dondurulecektir. <br>'
@@ -397,11 +403,15 @@ class CustomerSalesMap(tornado.web.RequestHandler):
             
             else:
             
-                distances = webBrowseMatrix(customerId)
-        
+                #distances = webBrowseMatrix(customerId)
+                
+                filename = 'files/weblog_%d.mat'%CUSTOMERCOUNT
+                distances = loadWeblogCustomer(filename, customerIndex)
+                
                 if np.sum(distances) == 0:
                     self.write("Invalid Customer Id. This customer does not have weblog data.")
                 else:
+                    plotWeblogMatrix(customerId,distances)
                     webBrowseGraph(customerId,distances)
                     
                     if ax1 == 4:
@@ -471,48 +481,61 @@ class similarCustomers(tornado.web.RequestHandler):
             else:
                 plotCriteria = 'sum'
                 
-            
-            if ax1 in [4,5]:
-                ax1 = 1
-            if ax2 in [4,5]:
-                ax2 = 2
+                
+            if ax1 in [4,5] or ax2 in [4,5]:
+                filename = 'files/weblog_%d.mat'%CUSTOMERCOUNT
+                
+                X = loadWeblogCustomer(filename, customerIndex)
+                
+                distances = np.zeros(CUSTOMERCOUNT)
+                for i in range(CUSTOMERCOUNT):
+                    custDist = loadWeblogCustomer(filename, i)
 
-            dimensions = np.array([1,1,1,1,0])
-            dimensions[ax1] = 0
-            dimensions[ax2] = 0
-            
-            
-            if (dimensions==np.array([0,0,1,1,0])).all() or (dimensions==np.array([0,1,1,1,0])).all():
-                filename = 'files/wdc_%d.mat'%CUSTOMERCOUNT
-            elif (dimensions==np.array([0,1,0,1,0])).all():
-                filename = 'files/whc_%d.mat'%CUSTOMERCOUNT
-            elif (dimensions==np.array([0,1,1,0,0])).all():
-                filename = 'files/wic_%d.mat'%CUSTOMERCOUNT
-            elif (dimensions==np.array([1,0,0,1,0])).all() or (dimensions==np.array([1,0,1,1,0])).all() or (dimensions==np.array([1,1,0,1,0])).all():
-                filename = 'files/dhc_%d.mat'%CUSTOMERCOUNT
-            elif (dimensions==np.array([1,0,1,0,0])).all() or (dimensions==np.array([1,1,1,0,0])).all():
-                filename = 'files/dic_%d.mat'%CUSTOMERCOUNT
+                    if np.sum(custDist) == 0:
+                        distances[i] = MAX_INT
+                    else:
+                        distances[i] = distance(X, custDist, metric)
+                
+                global tempRes
+                tempRes = distances
+                
             else:
-                filename = 'files/hic_%d.mat'%CUSTOMERCOUNT
                 
+                dimensions = np.array([1,1,1,1,0])
+                dimensions[ax1] = 0
+                dimensions[ax2] = 0
                 
-            X = loadViewCustomer(filename,customerIndex)
-            X = collapseTensor(X, dimensions, plotCriteria)
+                if (dimensions==np.array([0,0,1,1,0])).all() or (dimensions==np.array([0,1,1,1,0])).all():
+                    filename = 'files/wdc_%d.mat'%CUSTOMERCOUNT
+                elif (dimensions==np.array([0,1,0,1,0])).all():
+                    filename = 'files/whc_%d.mat'%CUSTOMERCOUNT
+                elif (dimensions==np.array([0,1,1,0,0])).all():
+                    filename = 'files/wic_%d.mat'%CUSTOMERCOUNT
+                elif (dimensions==np.array([1,0,0,1,0])).all() or (dimensions==np.array([1,0,1,1,0])).all() or (dimensions==np.array([1,1,0,1,0])).all():
+                    filename = 'files/dhc_%d.mat'%CUSTOMERCOUNT
+                elif (dimensions==np.array([1,0,1,0,0])).all() or (dimensions==np.array([1,1,1,0,0])).all():
+                    filename = 'files/dic_%d.mat'%CUSTOMERCOUNT
+                else:
+                    filename = 'files/hic_%d.mat'%CUSTOMERCOUNT
+                    
+                
+                X = loadViewCustomer(filename,customerIndex)
+                X = collapseTensor(X, dimensions, plotCriteria)
 
-            
-            distances = np.zeros(CUSTOMERCOUNT)
-            for i in range(CUSTOMERCOUNT):
-                cust = loadViewCustomer(filename,i)
-                cust = collapseTensor(cust, dimensions, plotCriteria)
 
-                distances[i] = distance(X, cust, metric)
-                
-            global tempRes
-            tempRes = distances
-                
-            #distances = distances + np.ones((1000))
-            #beta = 0.1
-            #distances = np.exp(-beta * distances)
+                distances = np.zeros(CUSTOMERCOUNT)
+                for i in range(CUSTOMERCOUNT):
+                    cust = loadViewCustomer(filename,i)
+                    cust = collapseTensor(cust, dimensions, plotCriteria)
+
+                    distances[i] = distance(X, cust, metric)
+
+                global tempRes
+                tempRes = distances
+
+                #distances = distances + np.ones((1000))
+                #beta = 0.1
+                #distances = np.exp(-beta * distances)
             
             
             indices = distances.argsort()
