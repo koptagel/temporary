@@ -98,6 +98,7 @@ class MainPage(tornado.web.RequestHandler):
     def post(self):
         self.write('<html><head><h1> Obase Tornado Server </h1></head>'
                    '<body> Son Guncelleme: 23.06.2016 16:00 <br><br>'
+                   '* similarCustomers fonksiyonunun inputlarında değişiklik yapıldı. Artık searchType ve Products değişkenlerinin de verilmesi gerekiyor. <br>'
                    '* similarCustomers ve customerSalesMap fonksiyonlarının arka plan kodlarında değişiklik yapıldı (web hareket verileri için). <br><br>'
                    '* similarCustomers fonksiyonuna urun yuzde degerleri eklendi. <br>'
                    'Su anda ekran gelistirilmesine devam edilebilmesi icin urun listesi ve yuzdeleri random olusturuluyor (gercek urun idleriyle). Ilerleyen gunlerde arka plandaki kod duzenlenecek.<br>'
@@ -150,9 +151,16 @@ class MainPage(tornado.web.RequestHandler):
                    '<tr><td> Kullback-Leibler (KL) Divergence </td><td> Itakura-Saito (IS) Distance </td><td> Hellinger Distance </td><td> Euclidean Distance </td></tr><br>'
                    '<tr><td> KL(P,Q) = P * log(P/Q) - P + Q </td><td> IS(P,Q) = (P/Q) * log(P/Q) - 1 </td><td> H(P,Q) = (1/sqrt(2)) * sqrt((sqrt(P) - sqrt(Q))*(sqrt(P) - sqrt(Q))) </td><td> EUC(P,Q) = (1/2) * (P-Q) * (P-Q) </td></tr><br>'
                    '</table><br>'
-                   '<b> Input: </b> 45.55.237.86:8880/<b>similarCustomers</b>?jsonData=<b>{"id": 1042240, "xAxis":1, "yAxis": 2, "type": 2, "distanceType": 0, "Count":5, "MinPercentage":60} </b><br>'
+                   'searchType parametresinin alabilecegi degerler ve anlamları asagidaki gibidir.'
+                   '<table border="1" width=500>'
+                   '<tr><td> 0 </td><td> 1 </td><br>'
+                   '<tr><td> Bütün müşterilerde ara </td><td> Sadece o profildeki müşterilerde ara </td></tr><br>'
+                   '</table><br>'
+                   'searchType parametresi 1 değerini aldığında, input olarak ayrıca ürün listesi verilmesi gerekiyor (customersOfProfile fonksiyonundaki gibi). <br><br>'
+                   '<b> Input: </b> 45.55.237.86:8880/<b>similarCustomers</b>?jsonData=<b>{"id": 1042240, "xAxis":1, "yAxis": 2, "type": 2, "distanceType": 0, "Count":5, "MinPercentage":60, "searchType": 1, "Products": [{"id": 32748}, {"id": 32747}, {"id": 32874}, {"id": 32823}]} </b><br>'
                    '<b> Output: </b> {"Customers": [{"percentage":98, "id": 90361}, {"percentage":80, "id": 90412}, {"percentage":77, "id": 1073258}, {"percentage":65, "id": 2032979}],"Products": [{"percentage":97, "id": 31971}, {"percentage":83, "id": 8926}, {"percentage":76, "id": 11685}, {"percentage":75, "id": 18109}]} <br>'  
-                   'Bu ornekte 1042240 numarali musterinin alim aliskanligina (haftanin gunlerine ve saatlere gore, alisveris yapip yapmadigi) en cok benzerlik gosteren, profil uygunlugu %60in uzerinde olan maksimum 5 musteri listeleniyor. <br><br>'
+                   'Bu ornekte 1042240 numarali musterinin alim aliskanligina (haftanin gunlerine ve saatlere gore, alisveris yapip yapmadigi) en cok benzerlik gosteren, profil uygunlugu %60in uzerinde olan maksimum 5 musteri listeleniyor.'
+                   'Bu müşteriler, verilen ürünlerin oluşturduğu müşteri profiline uygun olan müşterilerden seçiliyor. <br><br>'
                    'Ornek olarak kullanilabilecek musteri idleri: 1073258, 999538, 1155093. <br><br>'
                    '<h3> customerWeblog </h3>'
                    'Verilen musteri idsine gore, webdeki hareket grafiklerinin url bilgisi dondurulur. <br><br>'
@@ -445,6 +453,7 @@ class similarCustomers(tornado.web.RequestHandler):
         ax2 = int(similar_data['yAxis'])
         
         distanceType = similar_data['distanceType']
+        searchType = similar_data['searchType']
         
         if customerId not in EtailerSelectedCustomerIndex2Id:
             self.write("Invalid Customer Id")
@@ -462,6 +471,8 @@ class similarCustomers(tornado.web.RequestHandler):
         #    self.write("Invalid Axis Values. Axis values must be different from each other.")
         elif distanceType not in [0,1,2,3]:
             self.write("Invalid Distance Type. Distance type must be 0,1,2 or 3.")
+        elif searchType not in [0,1]:
+            self.write("Invalid Search Type. Search type must be 0 or 1.")
         else:
         
             customerIndex = np.where(EtailerSelectedCustomerIndex2Id==customerId)[0][0]
@@ -522,10 +533,37 @@ class similarCustomers(tornado.web.RequestHandler):
                 X = loadViewCustomer(filename,customerIndex)
                 X = collapseTensor(X, dimensions, plotCriteria)
 
+                if searchType == 0:
+                    profileCustCount = CUSTOMERCOUNT
+                    custIndexList = np.arange(CUSTOMERCOUNT)
+                else:
+                    #Change this part
+                    
+                    productList = similar_data['Products']
+                    numProducts = len(productList)
 
-                distances = np.zeros(CUSTOMERCOUNT)
-                for i in range(CUSTOMERCOUNT):
-                    cust = loadViewCustomer(filename,i)
+                    itemIndex = []
+                    invalidItems = []
+                    for i in range(numProducts):
+                        pid = productList[i]['id']
+
+                        if pid in itemIds:
+                            ind = np.where(itemIds==pid)[0][0]
+                            pid3 = itemIdsGroup3[ind]
+                            itemIndex.append(np.where(ItemIndex2IdGroup3==pid3)[0][0])
+                        else:
+                            data2 = {}
+                            data2['id'] = int(pid)
+                            invalidItems.append(data2)
+                            
+                    
+                    #getCustomerIndicesOfProfile
+                    profileCustCount = CUSTOMERCOUNT
+                    custIndexList = np.arange(CUSTOMERCOUNT)
+                
+                distances = np.zeros(len(custIndexList))
+                for i in range(len(custIndexList)):
+                    cust = loadViewCustomer(filename,custIndexList[i])
                     cust = collapseTensor(cust, dimensions, plotCriteria)
 
                     distances[i] = distance(X, cust, metric)
@@ -543,8 +581,13 @@ class similarCustomers(tornado.web.RequestHandler):
             sortedDistances = - sortedDistances
             percentages = (100 * np.ones(CUSTOMERCOUNT)) - ( sortedDistances * 100 / np.min(sortedDistances) )
 
-            customerIds = EtailerSelectedCustomerIndex2Id[indices]
-
+            customerIds = []
+            for i in range(len(custIndexList)):
+                customerIds.append(EtailerSelectedCustomerIndex2Id[custIndexList[indices[i]]])
+            customerIds = np.array(customerIds)
+            
+            #customerIds = EtailerSelectedCustomerIndex2Id[indices]
+            
             
             count = 0
             data = []
