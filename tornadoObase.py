@@ -97,7 +97,7 @@ class MainPage(tornado.web.RequestHandler):
         
     def post(self):
         self.write('<html><head><h1> Obase Tornado Server </h1></head>'
-                   '<body> Son Guncelleme: 23.06.2016 16:00 <br><br>'
+                   '<body> Son Guncelleme: 23.06.2016 16:45 <br><br>'
                    '* similarCustomers fonksiyonunun inputlarında değişiklik yapıldı. Artık searchType ve Products değişkenlerinin de verilmesi gerekiyor. <br>'
                    '* similarCustomers ve customerSalesMap fonksiyonlarının arka plan kodlarında değişiklik yapıldı (web hareket verileri için). <br><br>'
                    '* similarCustomers fonksiyonuna urun yuzde degerleri eklendi. <br>'
