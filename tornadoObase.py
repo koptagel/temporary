@@ -97,12 +97,19 @@ class MainPage(tornado.web.RequestHandler):
         
     def post(self):
         self.write('<html><head><h1> Obase Tornado Server </h1></head>'
-                   '<body> Son Guncelleme: 24.06.2016 14:00 <br><br>'
+                   '<body> Son Guncelleme: 21.07.2016 16:30 <br><br>'
+                   '* Serverda islenen datasetin genel bilgileri icin bu sayfaya ek baslik acildi. <br>'
+                   '* Server, belirli tarihler arasinda butun musteriler icin calisacak hale getirildi. <br><br>'
                    '* Fonksiyonlarda birkaç değişiklik yapıldı. <br>'
                    '* customersOfProfile fonksiyonuna 2 yeni input eklendi (ProfileId ve ProfileDs). <br>'
                    '* similarCustomers fonksiyonundaki Products parametresi kaldırıldı. Yerine ProfileId ve ProfileDs inputları eklendi. <br><br>'
-                   '* similarCustomers fonksiyonu belirli bir müşteri profilindeki benzer müşterileri bulacak şekilde düzenlendi. <br>'
-                   '* similarCustomers ve customerSalesMap fonksiyonlarının arka plan kodlarında değişiklik yapıldı (web hareket verileri için). <br><br>'
+                   '<h2> Dataset Bilgileri </h2>'
+                   'Ilk Alisveris Tarihi: 05.01.2015 00:00 <br>'
+                   'Son Alisveris Tarihi: 16.05.2016 15:00 <br>'
+                   'Toplam Satis Miktari: 432.636 <br>'
+                   'Musteri Sayisi: 3.193 <br>'
+                   'Gecerli Urun Sayisi: 6.087 <br>'
+                   'Gecerli Urun Grup3 Sayisi: 180 <br>'
                    '<h2> Genel Kullanim </h2>'
                    '45.55.237.86:8880/<b>FonksiyonIsmi</b>?jsonData=<b>JsonInputu</b> <br><br>'
                    'Asagida listelenen butun fonksiyonlarda veriler Json formatinda alinip, sonuclar Json formatinda geri dondurulecektir. <br>'
@@ -272,6 +279,7 @@ class MidResults(tornado.web.RequestHandler):
 
         
 ############ OBASE FUNCTIONS ##############
+        
 
 class CustomerSalesMap(tornado.web.RequestHandler):
     def set_default_headers(self):
