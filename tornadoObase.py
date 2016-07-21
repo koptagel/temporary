@@ -722,7 +722,6 @@ class RecommendProducts(tornado.web.RequestHandler):
         
         
         customerIndex = np.where(EtailerSelectedCustomerIndex2Id==customerId)[0][0]
-        print("*** Cust Index: %d" % customerIndex)
         
         customerSales = EtailerMatrix[customerIndex,:]
         customerSalesEst = EtailerMatrixEst[customerIndex,:]
