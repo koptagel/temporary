@@ -26,6 +26,7 @@ from collapseTensor import collapseTensor
 from plotTensor import plotTensor
 from plotTensor import plotTensorTr
 from plotTensor import plotBarChart
+from NMF import nmfFixBasis
 from NMF import nmf
 from distance import distance
 from weblog import webBrowseMatrix
@@ -67,7 +68,8 @@ itemIdsGroup3 = np.loadtxt('files/Etailer_ItemIdsGroup3.txt', dtype='int')
 global EtailerMatrix
 EtailerMatrix = np.load("files/Etailer_Customers_Items_%d.npy"%CUSTOMERCOUNT)
 
-
+global EtailerMatrixEst
+EtailerMatrixEst, _, _, _, _, _ = nmf(EtailerMatrix, 100, 20)
 
 global profileList
 profileList = ["Keyifciler", "Tazeciler", "Bebekliler"]
@@ -97,12 +99,10 @@ class MainPage(tornado.web.RequestHandler):
         
     def post(self):
         self.write('<html><head><h1> Obase Tornado Server </h1></head>'
-                   '<body> Son Guncelleme: 21.07.2016 16:30 <br><br>'
+                   '<body> Son Guncelleme: 21.07.2016 22:45 <br><br>'
+                   '* recommendProducts fonksiyonu eklendi. Su anda IdUrunGrup3 degerleri oneriyor. <br><br>'
                    '* Serverda islenen datasetin genel bilgileri icin bu sayfaya ek baslik acildi. <br>'
                    '* Server, belirli tarihler arasinda butun musteriler icin calisacak hale getirildi. <br><br>'
-                   '* Fonksiyonlarda birkaç değişiklik yapıldı. <br>'
-                   '* customersOfProfile fonksiyonuna 2 yeni input eklendi (ProfileId ve ProfileDs). <br>'
-                   '* similarCustomers fonksiyonundaki Products parametresi kaldırıldı. Yerine ProfileId ve ProfileDs inputları eklendi. <br><br>'
                    '<h2> Dataset Bilgileri </h2>'
                    'Ilk Alisveris Tarihi: 05.01.2015 00:00 <br>'
                    'Son Alisveris Tarihi: 16.05.2016 15:00 <br>'
@@ -175,6 +175,18 @@ class MainPage(tornado.web.RequestHandler):
                    '<b> Input: </b> 45.55.237.86:8880/<b>customerWeblog</b>?jsonData=<b>{"id": 90412} </b><br>'
                    '<b> Output: </b> {"image_url": "45.55.237.86:8880/files/90412_webmatrix.png","image_url_graph": "45.55.237.86:8880/files/90412_webgraph.png"} <br>'
                    'Ornek olarak kullanilabilecek musteri idleri: 1073258, 999538. <br><br>'
+                   '<h3> recommendProducts </h3>'
+                   'Verilen musteri idsi, tavsiye tipi ve sayiya gore onerilen urunlerin idleri dondurulur. <br>'
+                   'Su anda onerilen urunlerin IdUrunGrup3 degerleri donduruluyor. Ilerleyen asamalarda IdUrun degerleri dondurulecek. <br><br> '
+                   'type parametresi oneri listesinin nasil duzenlenecegini belirtiyor. Parametrenin alabilecegi degerler ve anlamlari asagidaki gibidir. '
+                   '<table border="1" width=800>'
+                   '<tr><td> mix </td><td> Hem simdiye kadar alinan hem de henuz alinmamis ama alinma ihtimali yuksek urunler listelenir </td></tr><br>'
+                   '<tr><td> discover </td><td> Yalnizca henuz alinmamis ama alinma ihtimali yuksek urunler listelenir </td></tr><br>'
+                   '<tr><td> habit </td><td> Yalnizca simdiye kadar alinan urunler listelenir </td></tr><br>'
+                   '</table><br>'
+                   '<b> Input: </b> 45.55.237.86:8880/<b>recommendProducts</b>?jsonData=<b>{"id": 737293, "type": "mix", "Count":5} </b><br>'
+                   '<b> Output: </b> {"Products": [{"id": 597}, {"id": 454}, {"id": 457}, {"id": 553}, {"id": 636}]} <br>'
+                   'Bu ornekte 737293 numarali musteri icin maksimum 5 tane urun oneriliyor. Urun listesi musterinin hem simdiye kadar aldigi hem de henuz almadigi fakat alma ihtimali yuksek urunlerden olusuyor. <br><br>'
                    '</body></html>')
         
 
@@ -449,7 +461,7 @@ class CustomersOfProfile(tornado.web.RequestHandler):
 
             maxIter = 3
 
-            _, _, _, _, indices, percentages = nmf(EtailerMatrix, Z2, maxIter, rank)
+            _, _, _, _, indices, percentages = nmfFixBasis(EtailerMatrix, Z2, maxIter, rank)
             customerIds = EtailerSelectedCustomerIndex2Id[indices]
 
             count = 0
@@ -684,11 +696,63 @@ class similarCustomers(tornado.web.RequestHandler):
             
             global Dist
             Dist = distances
-
  
+# localhost:8880/recommendProducts?jsonData={"id": 737293, "type": "mix", "Count":10}
+class RecommendProducts(tornado.web.RequestHandler):
+    def set_default_headers(self):
+        self.set_header("Access-Control-Allow-Origin", "*")
+        
+    def get(self, *args):
+        self.post(*args)
+        
+    def post(self, *args):
+        temp = self.get_argument('jsonData')
+        rec_data = json.loads(temp)
+        
+        customerId = int(rec_data['id'])
+        numRecItems = int(rec_data['Count'])
+        criteria = rec_data['type']
+        
+        
+        customerIndex = np.where(EtailerSelectedCustomerIndex2Id==customerId)[0][0]
+        print("*** Cust Index: %d" % customerIndex)
+        
+        customerSales = EtailerMatrix[customerIndex,:]
+        customerSalesEst = EtailerMatrixEst[customerIndex,:]
             
+        
+        if criteria == 'mix':
+            recItemIndices = np.argsort(customerSalesEst)[::-1][0:numRecItems]
+        else:
+            realItemIndices = np.where(customerSales>0)
+            realItemIndices = realItemIndices[0]
+
+            recItemIndicesOrder = np.argsort(customerSalesEst)[::-1]
+            recItemIndices = []
+
+            if criteria == 'discover':
+                for i in range(len(recItemIndicesOrder)):
+                    if recItemIndicesOrder[i] not in realItemIndices:
+                        recItemIndices.append(recItemIndicesOrder[i])
+            else:
+                for i in range(len(recItemIndicesOrder)):
+                    if recItemIndicesOrder[i] in realItemIndices:
+                        recItemIndices.append(recItemIndicesOrder[i])
+
+            recItemIndices = np.array(recItemIndices) 
+            recItemIndices = recItemIndices[0:numRecItems]
+
+        recProductIds = itemIdsGroup3[recItemIndices]
             
-            
+        data = []
+        for i in range(len(recProductIds)):
+            data2 = {}
+            data2['id'] = int(recProductIds[i])
+            data.append(data2)
+
+        json_data = json.dumps({"Products": data})
+
+        self.write(json_data)  
             
             
 
@@ -702,8 +766,7 @@ routes_config = [
     (r"/customerSalesMap", CustomerSalesMap),
     (r"/similarCustomers", similarCustomers),
     (r"/customerWeblog", CustomerWeblogPlots),
-    #(r"/customersOfProfile2", CustomersOfProfile2),
-    #(r"/similarCustomers2", similarCustomers2),
+    (r"/recommendProducts", RecommendProducts),
     (r"/(.*\.png)", tornado.web.StaticFileHandler,{"path": "." }),
 ]
 application = tornado.web.Application(routes_config)
