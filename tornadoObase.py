@@ -12,6 +12,7 @@ import json
 import requests
 import numpy as np
 import scipy.io as sio
+from sklearn.decomposition import NMF
 
 import matplotlib
 matplotlib.use('Agg')
@@ -69,7 +70,13 @@ global EtailerMatrix
 EtailerMatrix = np.load("files/Etailer_Customers_Items_%d.npy"%CUSTOMERCOUNT)
 
 global EtailerMatrixEst
-EtailerMatrixEst, _, _, _, _, _ = nmf(EtailerMatrix, 100, 20)
+#EtailerMatrixEst, _, _, _, _, _ = nmf(EtailerMatrix, 100, 20)
+model = NMF(n_components=20, init='nndsvd', random_state=2)
+W = model.fit_transform(EtailerMatrix) 
+H = model.components_
+EtailerMatrixEst = np.dot(W,H)
+
+
 
 global profileList
 profileList = ["Keyifciler", "Tazeciler", "Bebekliler"]
