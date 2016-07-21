@@ -37,7 +37,7 @@ from weblog import plotWeblogMatrix
 HOST = 'localhost'
 PORT = 8880
 
-CUSTOMERCOUNT = 1000
+CUSTOMERCOUNT = 3193
 
 MAX_INT = 2147483647
 
@@ -273,84 +273,6 @@ class MidResults(tornado.web.RequestHandler):
         
 ############ OBASE FUNCTIONS ##############
 
-class CustomersOfProfile2(tornado.web.RequestHandler):
-        
-    def set_default_headers(self):
-        self.set_header("Access-Control-Allow-Origin", "*")
-    
-    def get(self, *args):
-        self.post(*args)
-        
-    def post(self, *args):
-        temp = self.get_argument('jsonData')
-        profile_data = json.loads(temp)
-        
-        numCustomers = profile_data['Count']
-        minPercentage = profile_data['MinPercentage']
-        #criteria = profile_data['type']
-    
-        if numCustomers<1:
-            self.write("Invalid count. Count must be more than 0.")
-        elif minPercentage>100:
-            self.write("Invalid percentage. Minimum percentage must less than or equal to 100.")
-        #elif criteria not in [1,2]:
-        #    self.write("Invalid Type. Type must be 1 or 2.")
-        else:
-
-            productList = profile_data['Products']
-            numProducts = len(productList)
-
-            index = []
-            invalidItems = []
-            for i in range(numProducts):
-                pid = productList[i]['id']
-
-                if pid in itemIds:
-                    ind = np.where(itemIds==pid)[0][0]
-                    pid3 = itemIdsGroup3[ind]
-                    index.append(np.where(ItemIndex2IdGroup3==pid3)[0][0])
-                else:
-                    data2 = {}
-                    data2['id'] = int(pid)
-                    invalidItems.append(data2)
-
-            global EtailerMatrix
-            EtailerMatrix[np.where(EtailerMatrix>0)]=1
-            
-            #if criteria == 2:
-            #    EtailerMatrix[np.where(EtailerMatrix>0)]=1
-            
-            s1,s2 = EtailerMatrix.shape
-            rank = 1
-
-            Z2 = np.zeros((rank,s2))
-            Z2[0,index] = 1
-
-            maxIter = 3
-
-            _, _, _, _, indices, percentages = nmf(EtailerMatrix, Z2, maxIter, rank)
-            customerIds = EtailerSelectedCustomerIndex2Id[indices]
-
-            count = 0
-            data = []
-            for i in range(len(customerIds)):
-                if count < numCustomers:
-                    if int(percentages[i])>= minPercentage:
-                        data2 = {}
-                        data2['percentage'] = int(percentages[i])
-                        data2['id'] = int(customerIds[i])
-
-                        data.append(data2)
-                        count = count+1
-
-            if len(invalidItems) > 0:
-                json_data = json.dumps({"Customers": data, "InvalidItems": invalidItems})
-            else:    
-                json_data = json.dumps({"Customers": data})
-                
-            self.write(json_data)  
-
-
 class CustomerSalesMap(tornado.web.RequestHandler):
     def set_default_headers(self):
         self.set_header("Access-Control-Allow-Origin", "*")
@@ -431,222 +353,8 @@ class CustomerSalesMap(tornado.web.RequestHandler):
                     info = json.dumps({"image_url": imageUrl})
                     self.write("%s" % info)
 
-# localhost:8880/similarCustomers?jsonData={"id": 90412, "xAxis":0,"yAxis":2,"type":1,"distanceType":0,"Count":10,"MinPercentage":50}
-             
-class similarCustomers2(tornado.web.RequestHandler):
-    def set_default_headers(self):
-        self.set_header("Access-Control-Allow-Origin", "*")
-        
-    def get(self, *args):
-        self.post(*args)
-        
-    def post(self, *args):
-        temp = self.get_argument('jsonData')
-        similar_data = json.loads(temp)
-        
-
-        customerId = int(similar_data['id'])
-        numCustomers = similar_data['Count']
-        minPercentage = similar_data['MinPercentage']
-        
-        criteria = similar_data['type']
-        ax1 = int(similar_data['xAxis'])
-        ax2 = int(similar_data['yAxis'])
-        
-        distanceType = similar_data['distanceType']
-        searchType = similar_data['searchType']
-        
-        if customerId not in EtailerSelectedCustomerIndex2Id:
-            self.write("Invalid Customer Id")
-        elif numCustomers<1:
-            self.write("Invalid count. Count must be more than 0.")
-        elif minPercentage>100:
-            self.write("Invalid percentage. Minimum percentage must less than or equal to 100.")
-        elif criteria not in [1,2]:
-            self.write("Invalid Type. Type must be 1 or 2.")
-        elif ax1 not in [0,1,2,3,4,5]:
-            self.write("Invalid Axis Value. Axis value must be 0,1,2 or 3.")
-        elif ax2 not in [0,1,2,3,4,5]:
-            self.write("Invalid Axis Value. Axis value must be 0,1,2 or 3.")
-        #elif ax1 == ax2:
-        #    self.write("Invalid Axis Values. Axis values must be different from each other.")
-        elif distanceType not in [0,1,2,3]:
-            self.write("Invalid Distance Type. Distance type must be 0,1,2 or 3.")
-        elif searchType not in [0,1]:
-            self.write("Invalid Search Type. Search type must be 0 or 1.")
-        else:
-        
-            customerIndex = np.where(EtailerSelectedCustomerIndex2Id==customerId)[0][0]
-    
-                
-            if distanceType==0:
-                metric = 'kl'
-            elif distanceType==1:
-                metric = 'is'
-            elif distanceType==2:
-                metric = 'hel'
-            else:
-                metric = 'euc'
-                
-            if criteria == 2:
-                plotCriteria = 'binary'
-            else:
-                plotCriteria = 'sum'
-                
-                
-            if ax1 in [4,5] or ax2 in [4,5]:
-                filename = 'files/weblog_%d.mat'%CUSTOMERCOUNT
-                
-                X = loadWeblogCustomer(filename, customerIndex)
-                
-                distances = np.zeros(CUSTOMERCOUNT)
-                for i in range(CUSTOMERCOUNT):
-                    custDist = loadWeblogCustomer(filename, i)
-
-                    if np.sum(custDist) == 0:
-                        distances[i] = MAX_INT
-                    else:
-                        distances[i] = distance(X, custDist, metric)
-                
-                global tempRes
-                tempRes = distances
-                
-            else:
-                
-                dimensions = np.array([1,1,1,1,0])
-                dimensions[ax1] = 0
-                dimensions[ax2] = 0
-                
-                if (dimensions==np.array([0,0,1,1,0])).all() or (dimensions==np.array([0,1,1,1,0])).all():
-                    filename = 'files/wdc_%d.mat'%CUSTOMERCOUNT
-                elif (dimensions==np.array([0,1,0,1,0])).all():
-                    filename = 'files/whc_%d.mat'%CUSTOMERCOUNT
-                elif (dimensions==np.array([0,1,1,0,0])).all():
-                    filename = 'files/wic_%d.mat'%CUSTOMERCOUNT
-                elif (dimensions==np.array([1,0,0,1,0])).all() or (dimensions==np.array([1,0,1,1,0])).all() or (dimensions==np.array([1,1,0,1,0])).all():
-                    filename = 'files/dhc_%d.mat'%CUSTOMERCOUNT
-                elif (dimensions==np.array([1,0,1,0,0])).all() or (dimensions==np.array([1,1,1,0,0])).all():
-                    filename = 'files/dic_%d.mat'%CUSTOMERCOUNT
-                else:
-                    filename = 'files/hic_%d.mat'%CUSTOMERCOUNT
                     
-                
-                X = loadViewCustomer(filename,customerIndex)
-                X = collapseTensor(X, dimensions, plotCriteria)
-
-                if searchType == 0:
-                    profileCustCount = CUSTOMERCOUNT
-                    custIndexList = np.arange(CUSTOMERCOUNT)
                     
-                #Todo
-                else:
-                    productList = similar_data['Products']
-                    numProducts = len(productList)
-
-                    itemIndex = []
-                    invalidItems = []
-                    for i in range(numProducts):
-                        pid = productList[i]['id']
-
-                        if pid in itemIds:
-                            ind = np.where(itemIds==pid)[0][0]
-                            pid3 = itemIdsGroup3[ind]
-                            itemIndex.append(np.where(ItemIndex2IdGroup3==pid3)[0][0])
-                        else:
-                            data2 = {}
-                            data2['id'] = int(pid)
-                            invalidItems.append(data2)
-                       
-                    
-                    global EtailerMatrix
-                    EtailerMatrix[np.where(EtailerMatrix>0)]=1
-                    
-                    s1,s2 = EtailerMatrix.shape
-                    rank = 1
-
-                    Z2 = np.zeros((rank,s2))
-                    Z2[0,itemIndex] = 1
-
-                    maxIter = 3
-
-                    _, _, _, _, indices, percentages = nmf(EtailerMatrix, Z2, maxIter, rank)
-                    customerIds = EtailerSelectedCustomerIndex2Id[indices]
-                    
-                    profileCustCount = 150
-                    custIndexList = indices[0:profileCustCount]
-                    
-                
-                distances = np.zeros(len(custIndexList))
-                for i in range(len(custIndexList)):
-                    cust = loadViewCustomer(filename,custIndexList[i])
-                    cust = collapseTensor(cust, dimensions, plotCriteria)
-
-                    distances[i] = distance(X, cust, metric)
-
-                
-                global tempRes
-                tempRes = distances
-
-                #distances = distances + np.ones((1000))
-                #beta = 0.1
-                #distances = np.exp(-beta * distances)
-            
-            
-            indices = distances.argsort()
-            sortedDistances = np.sort(distances)
-            sortedDistances = - sortedDistances
-            percentages = (100 * np.ones(len(custIndexList))) - ( sortedDistances * 100 / np.min(sortedDistances) )
-
-            customerIds = []
-            for i in range(len(custIndexList)):
-                customerIds.append(EtailerSelectedCustomerIndex2Id[custIndexList[indices[i]]])
-            customerIds = np.array(customerIds)
-            
-            #customerIds = EtailerSelectedCustomerIndex2Id[indices]
-            
-            
-            count = 0
-            data = []
-            for i in range(len(customerIds)):
-                if count < numCustomers:
-                    if int(percentages[i])>= minPercentage:
-                        data2 = {}
-                        data2['percentage'] = int(percentages[i])
-                        data2['id'] = int(customerIds[i])
-
-                        data.append(data2)
-                        count = count+1
-
-            #json_data = json.dumps({"Customers": data})
-            
-            productIndices = np.random.randint(6000, size=15)
-            productIds = itemIds[productIndices]
-            
-            productPercentages = np.random.randint(50, size=(15)) + 50
-            productPercentages = np.sort(productPercentages,axis=0)[::-1].flatten()
-            
-            productsData = []
-            for i in range(len(productIds)):
-                data2 = {}
-                data2['id'] = int(productIds[i])
-                data2['percentage'] = int(productPercentages[i])
-                productsData.append(data2)
-
-            json_data = json.dumps({"Customers": data, "Products": productsData})
-
-            self.write(json_data)  
-            
-            
-            global tempIndices
-            tempIndices = indices
-            
-            global tempPerc
-            tempPerc = percentages
-            
-            global Dist
-            Dist = distances
-
-            
 class CustomerWeblogPlots(tornado.web.RequestHandler):
     def set_default_headers(self):
         self.set_header("Access-Control-Allow-Origin", "*")
@@ -673,16 +381,8 @@ class CustomerWeblogPlots(tornado.web.RequestHandler):
             info = json.dumps({"image_url": matrixUrl, "image_url_graph": graphUrl})
             self.write("%s" % info)
 
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
+                 
+                
 class CustomersOfProfile(tornado.web.RequestHandler):
         
     def set_default_headers(self):
@@ -994,8 +694,8 @@ routes_config = [
     (r"/customerSalesMap", CustomerSalesMap),
     (r"/similarCustomers", similarCustomers),
     (r"/customerWeblog", CustomerWeblogPlots),
-    (r"/customersOfProfile2", CustomersOfProfile2),
-    (r"/similarCustomers2", similarCustomers2),
+    #(r"/customersOfProfile2", CustomersOfProfile2),
+    #(r"/similarCustomers2", similarCustomers2),
     (r"/(.*\.png)", tornado.web.StaticFileHandler,{"path": "." }),
 ]
 application = tornado.web.Application(routes_config)
