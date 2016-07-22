@@ -96,7 +96,7 @@ customeridss = loadCustomerIdFromTxt(name)
 
 global PurchaseMatrixEst
 model = NMF(n_components=20, init='nndsvd', random_state=2)
-W = model.fit_transform(PurchaseMatrix.toarray()) 
+W = model.fit_transform(PurchaseMatrix) 
 H = model.components_
 PurchaseMatrixEst = np.dot(W,H)
 
