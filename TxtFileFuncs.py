@@ -26,6 +26,56 @@ def loadMatrixFromTxt(filename):
 
     return PurchaseMatrix
 
+
+def loadRecommendationMatrixFromTxt(filename):
+    row = []
+    col = []
+    data = []
+
+    for line in open(filename, "r"):
+        values = line.split()
+
+        customer = int(values[0])
+        item = int(values[1])
+        amount = float(values[2])
+
+        row.append(customer)
+        col.append(item)
+        data.append(amount)
+
+    row = np.array(row)
+    col = np.array(col)
+    data = np.array(data)
+
+    PurchaseMatrixEst = csr_matrix( (data,(row,col)), shape=(max(row)+1,max(col)+1) )
+
+    return PurchaseMatrixEst
+
+def loadRecommendationOfCustomerMatrixFromTxt(filename, customerIndex):
+    row = []
+    col = []
+    data = []
+
+    for line in open(filename, "r"):
+        values = line.split()
+
+        customer = int(values[0])
+        if customer == customerIndex:
+            item = int(values[1])
+            amount = float(values[2])
+
+            row.append(customer)
+            col.append(item)
+            data.append(amount)
+
+    row = np.array(row)
+    col = np.array(col)
+    data = np.array(data)
+
+    PurchaseMatrixEst = csr_matrix( (data,(row,col)), shape=(max(row)+1,max(col)+1) )
+
+    return PurchaseMatrixEst
+
 def loadItemIdAndDsFromTxt(name):
     filename = "%s_Items.txt" % (name)
     

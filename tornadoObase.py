@@ -35,8 +35,10 @@ from weblog import webBrowseGraph
 from weblog import loadWeblogCustomer
 from weblog import plotWeblogMatrix
 from TxtFileFuncs import loadMatrixFromTxt
+from TxtFileFuncs import loadRecommendationMatrixFromTxt
 from TxtFileFuncs import loadItemIdAndDsFromTxt
 from TxtFileFuncs import loadCustomerIdFromTxt
+from TxtFileFuncs import loadRecommendationOfCustomerMatrixFromTxt
 
 # Setting host name, port number, directory name and the static path. 
 HOST = 'localhost'
@@ -87,6 +89,10 @@ filename = "files/1_1_1_7269_3392_Tensor_binary.txt"
 global PurchaseMatrix
 PurchaseMatrix = loadMatrixFromTxt(filename)
 
+#filename = "files/1_1_1_7269_3392_TensorEst.txt"
+#global PurchaseMatrixEst
+#PurchaseMatrixEst = loadRecommendationMatrixFromTxt(filename)
+
 name = "files/81_7_24_7269_3392"
 global itemids
 global itemdss
@@ -94,11 +100,10 @@ global customeridss
 itemids,itemdss = loadItemIdAndDsFromTxt(name)
 customeridss = loadCustomerIdFromTxt(name)
 
-global PurchaseMatrixEst
-model = NMF(n_components=20, init='nndsvd', random_state=2)
-W = model.fit_transform(PurchaseMatrix) 
-H = model.components_
-PurchaseMatrixEst = np.dot(W,H)
+#model = NMF(n_components=20, init='nndsvd', random_state=2)
+#W = model.fit_transform(PurchaseMatrix) 
+#H = model.components_
+#PurchaseMatrixEst = np.dot(W,H)
 
 print("** End Recommendation System **")
 ### RECOMMENDATION SYSTEM
@@ -805,7 +810,10 @@ class RecommendProducts2(tornado.web.RequestHandler):
         customerIndex = np.where(customeridss==customerId)[0][0]
         
         customerSales = PurchaseMatrix[customerIndex,:].toarray()
-        customerSalesEst = PurchaseMatrixEst[customerIndex,:]
+        
+        filename = "files/1_1_1_7269_3392_TensorEst.txt"
+        customerSalesEst = loadRecommendationOfCustomerMatrixFromTxt(filename, customerIndex).toarray()
+        #customerSalesEst = PurchaseMatrixEst[customerIndex,:]
             
         
         if criteria == 'mix':
@@ -829,12 +837,13 @@ class RecommendProducts2(tornado.web.RequestHandler):
             recItemIndices = np.array(recItemIndices) 
             recItemIndices = recItemIndices[0:numRecItems]
 
+        global itemids
         recProductIds = itemids[recItemIndices]
             
         data = []
         for i in range(len(recProductIds)):
             data2 = {}
-            data2['id'] = int(recProductIds[i])
+            data2['id'] = int(recProductIds[0][i])
             data.append(data2)
 
         json_data = json.dumps({"Products": data})
