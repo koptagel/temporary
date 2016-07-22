@@ -758,9 +758,7 @@ class RecommendProducts(tornado.web.RequestHandler):
         customerSalesEst = EtailerMatrixEst[customerIndex,:]
             
         
-        if criteria == 'mix':
-            recItemIndices = np.argsort(customerSalesEst)[::-1][0:numRecItems]
-        else:
+        if criteria != 'mix':
             realItemIndices = np.where(customerSales>0)
             realItemIndices = realItemIndices[0]
 
@@ -776,8 +774,17 @@ class RecommendProducts(tornado.web.RequestHandler):
                     if recItemIndicesOrder[i] in realItemIndices:
                         recItemIndices.append(recItemIndicesOrder[i])
 
-            recItemIndices = np.array(recItemIndices) 
-            recItemIndices = recItemIndices[0:numRecItems]
+            if(len(recItemIndices)>0):
+                recItemIndices = np.array(recItemIndices) 
+                recItemIndices = recItemIndices[0:numRecItems]
+            
+        else:
+            recItemIndices = np.argsort(customerSalesEst)[::-1][0:numRecItems]
+        
+        if(len(recItemIndices)==0):
+            self.write("Criteria changed to: Mix")
+            recItemIndices = np.argsort(customerSalesEst)[::-1][0:numRecItems]
+        
 
         recProductIds = itemIdsGroup3[recItemIndices]
             
@@ -815,16 +822,13 @@ class RecommendProducts2(tornado.web.RequestHandler):
         customerSalesEst = loadRecommendationOfCustomerMatrixFromTxt(filename, customerIndex).toarray()
         #customerSalesEst = PurchaseMatrixEst[customerIndex,:]
             
-        
-        if criteria == 'mix':
-            recItemIndices = np.argsort(customerSalesEst)[::-1][0:numRecItems]
-        else:
+        if criteria != 'mix':
             realItemIndices = np.where(customerSales>0)
             realItemIndices = realItemIndices[0]
 
             recItemIndicesOrder = np.argsort(customerSalesEst)[::-1]
             recItemIndices = []
-
+            
             if criteria == 'discover':
                 for i in range(len(recItemIndicesOrder)):
                     if recItemIndicesOrder[i] not in realItemIndices:
@@ -834,8 +838,17 @@ class RecommendProducts2(tornado.web.RequestHandler):
                     if recItemIndicesOrder[i] in realItemIndices:
                         recItemIndices.append(recItemIndicesOrder[i])
 
-            recItemIndices = np.array(recItemIndices) 
-            recItemIndices = recItemIndices[0:numRecItems]
+            if(len(recItemIndices)>0):
+                recItemIndices = np.array(recItemIndices) 
+                recItemIndices = recItemIndices[0:numRecItems]
+            
+        else:
+            recItemIndices = np.argsort(customerSalesEst)[::-1][0:numRecItems]
+            
+        if(len(recItemIndices)==0):
+            self.write("Criteria changed to: Mix")
+            recItemIndices = np.argsort(customerSalesEst)[::-1][0:numRecItems]
+            
 
         global itemids
         recProductIds = itemids[recItemIndices]
