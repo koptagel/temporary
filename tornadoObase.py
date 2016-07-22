@@ -137,8 +137,10 @@ class MainPage(tornado.web.RequestHandler):
         
     def post(self):
         self.write('<html><head><h1> Obase Tornado Server </h1></head>'
-                   '<body> Son Guncelleme: 21.07.2016 22:45 <br><br>'
-                   '* recommendProducts fonksiyonu eklendi. Su anda IdUrunGrup3 degerleri oneriyor. <br><br>'
+                   '<body> Son Guncelleme: 22.07.2016 13:00 <br><br>'
+                   '* recommendProducts2 fonksiyonu eklendi. IdUrun degerleri oneriyor. <br>'
+                   '* recommendProducts fonksiyonu eklendi. Su anda IdUrunGrup3 degerleri oneriyor. <br>'
+                   '* Bu fonksiyonlarda goze carpan birkac ufak problem var. En kisa surede duzeltilecekler <br><br>'
                    '* Serverda islenen datasetin genel bilgileri icin bu sayfaya ek baslik acildi. <br>'
                    '* Server, belirli tarihler arasinda butun musteriler icin calisacak hale getirildi. <br><br>'
                    '<h2> Dataset Bilgileri </h2>'
@@ -147,7 +149,8 @@ class MainPage(tornado.web.RequestHandler):
                    'Toplam Satis Miktari: 432.636 <br>'
                    'Musteri Sayisi: 3.193 <br>'
                    'Gecerli Urun Sayisi: 6.087 <br>'
-                   'Gecerli Urun Grup3 Sayisi: 180 <br>'
+                   'Gecerli Urun Grup3 Sayisi: 180 <br><br>'
+                   'recommendProducts2 fonksiyonu daha farkli bir dataset kullaniyor. <br>'
                    '<h2> Genel Kullanim </h2>'
                    '45.55.237.86:8880/<b>FonksiyonIsmi</b>?jsonData=<b>JsonInputu</b> <br><br>'
                    'Asagida listelenen butun fonksiyonlarda veriler Json formatinda alinip, sonuclar Json formatinda geri dondurulecektir. <br>'
@@ -225,8 +228,22 @@ class MainPage(tornado.web.RequestHandler):
                    '<b> Input: </b> 45.55.237.86:8880/<b>recommendProducts</b>?jsonData=<b>{"id": 737293, "type": "mix", "Count":5} </b><br>'
                    '<b> Output: </b> {"Products": [{"id": 597}, {"id": 454}, {"id": 457}, {"id": 553}, {"id": 636}]} <br>'
                    'Bu ornekte 737293 numarali musteri icin maksimum 5 tane urun oneriliyor. Urun listesi musterinin hem simdiye kadar aldigi hem de henuz almadigi fakat alma ihtimali yuksek urunlerden olusuyor. <br><br>'
+                   '<h3> recommendProducts2 </h3>'
+                   'Verilen musteri idsi, tavsiye tipi ve sayiya gore onerilen urunlerin idleri dondurulur. <br><br>'
+                   'Bu fonksiyonda kullanilan dataset, serverin geri kalanindan farkli. Butun server bu datasete gore update edilecek. <br>'
+                   'Dataset 05.01.2015 00:00 - 18.07.2016 14:00 tarihleri arasinda yapilan satislari kapsiyor. <br>' 
+                   '81 Hafta, 7 Gun, 24 Saat, 7.269 Urun, 3.392 Musteri <br><br>'
+                   'type parametresi oneri listesinin nasil duzenlenecegini belirtiyor. Parametrenin alabilecegi degerler ve anlamlari asagidaki gibidir. '
+                   '<table border="1" width=800>'
+                   '<tr><td> mix </td><td> Hem simdiye kadar alinan hem de henuz alinmamis ama alinma ihtimali yuksek urunler listelenir </td></tr><br>'
+                   '<tr><td> discover </td><td> Yalnizca henuz alinmamis ama alinma ihtimali yuksek urunler listelenir </td></tr><br>'
+                   '<tr><td> habit </td><td> Yalnizca simdiye kadar alinan urunler listelenir </td></tr><br>'
+                   '</table><br>'
+                   '<b> Input: </b> 45.55.237.86:8880/<b>recommendProducts2</b>?jsonData=<b>{"id": 737293, "type": "mix", "Count":5} </b><br>'
+                   '<b> Output: </b> {"Products": [{"id": 32823}, {"id": 18110}, {"id": 18109}, {"id": 1808}, {"id": 18107}]} <br>'
+                   'Bu ornekte 737293 numarali musteri icin maksimum 5 tane urun oneriliyor. Urun listesi musterinin hem simdiye kadar aldigi hem de henuz almadigi fakat alma ihtimali yuksek urunlerden olusuyor. <br><br>'
                    '</body></html>')
-        
+    
 
 class DefineProfile(tornado.web.RequestHandler):
     def get(self):
