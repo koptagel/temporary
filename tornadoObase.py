@@ -34,6 +34,9 @@ from weblog import webBrowseMatrix
 from weblog import webBrowseGraph
 from weblog import loadWeblogCustomer
 from weblog import plotWeblogMatrix
+from TxtFileFuncs import loadMatrixFromTxt
+from TxtFileFuncs import loadItemIdAndDsFromTxt
+from TxtFileFuncs import loadCustomerIdFromTxt
 
 # Setting host name, port number, directory name and the static path. 
 HOST = 'localhost'
@@ -76,6 +79,25 @@ W = model.fit_transform(EtailerMatrix)
 H = model.components_
 EtailerMatrixEst = np.dot(W,H)
 
+
+### RECOMMENDATION SYSTEM
+filename = "files/1_1_1_7269_3392_Tensor_binary.txt"
+global PurchaseMatrix
+PurchaseMatrix = loadMatrixFromTxt(filename)
+
+name = "files/81_7_24_7269_3392"
+global itemids
+global itemdss
+global customeridss
+itemids,itemdss = loadItemIdAndDsFromTxt(name)
+customeridss = loadCustomerIdFromTxt(name)
+
+global PurchaseMatrixEst
+model = NMF(n_components=20, init='nndsvd', random_state=2)
+W = model.fit_transform(PurchaseMatrix.toarray()) 
+H = model.components_
+PurchaseMatrixEst = np.dot(W,H)
+### RECOMMENDATION SYSTEM
 
 
 global profileList
@@ -759,7 +781,61 @@ class RecommendProducts(tornado.web.RequestHandler):
         json_data = json.dumps({"Products": data})
 
         self.write(json_data)  
+  
+class RecommendProducts2(tornado.web.RequestHandler):
+    def set_default_headers(self):
+        self.set_header("Access-Control-Allow-Origin", "*")
+        
+    def get(self, *args):
+        self.post(*args)
+        
+    def post(self, *args):
+        temp = self.get_argument('jsonData')
+        rec_data = json.loads(temp)
+        
+        customerId = int(rec_data['id'])
+        numRecItems = int(rec_data['Count'])
+        criteria = rec_data['type']
+        
+        
+        customerIndex = np.where(customeridss==customerId)[0][0]
+        
+        customerSales = PurchaseMatrix[customerIndex,:].toarray()
+        customerSalesEst = PurchaseMatrixEst[customerIndex,:]
             
+        
+        if criteria == 'mix':
+            recItemIndices = np.argsort(customerSalesEst)[::-1][0:numRecItems]
+        else:
+            realItemIndices = np.where(customerSales>0)
+            realItemIndices = realItemIndices[0]
+
+            recItemIndicesOrder = np.argsort(customerSalesEst)[::-1]
+            recItemIndices = []
+
+            if criteria == 'discover':
+                for i in range(len(recItemIndicesOrder)):
+                    if recItemIndicesOrder[i] not in realItemIndices:
+                        recItemIndices.append(recItemIndicesOrder[i])
+            else:
+                for i in range(len(recItemIndicesOrder)):
+                    if recItemIndicesOrder[i] in realItemIndices:
+                        recItemIndices.append(recItemIndicesOrder[i])
+
+            recItemIndices = np.array(recItemIndices) 
+            recItemIndices = recItemIndices[0:numRecItems]
+
+        recProductIds = itemids[recItemIndices]
+            
+        data = []
+        for i in range(len(recProductIds)):
+            data2 = {}
+            data2['id'] = int(recProductIds[i])
+            data.append(data2)
+
+        json_data = json.dumps({"Products": data})
+
+        self.write(json_data)  
             
 
 # The configuration of routes.
@@ -773,6 +849,7 @@ routes_config = [
     (r"/similarCustomers", similarCustomers),
     (r"/customerWeblog", CustomerWeblogPlots),
     (r"/recommendProducts", RecommendProducts),
+    (r"/recommendProducts2", RecommendProducts2),
     (r"/(.*\.png)", tornado.web.StaticFileHandler,{"path": "." }),
 ]
 application = tornado.web.Application(routes_config)
