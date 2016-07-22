@@ -81,6 +81,8 @@ EtailerMatrixEst = np.dot(W,H)
 
 
 ### RECOMMENDATION SYSTEM
+print("** Start Recommendation System **")
+
 filename = "files/1_1_1_7269_3392_Tensor_binary.txt"
 global PurchaseMatrix
 PurchaseMatrix = loadMatrixFromTxt(filename)
@@ -97,6 +99,8 @@ model = NMF(n_components=20, init='nndsvd', random_state=2)
 W = model.fit_transform(PurchaseMatrix.toarray()) 
 H = model.components_
 PurchaseMatrixEst = np.dot(W,H)
+
+print("** End Recommendation System **")
 ### RECOMMENDATION SYSTEM
 
 
