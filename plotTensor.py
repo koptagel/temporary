@@ -1,4 +1,6 @@
 # %load plotTensor.py
+# %load plotTensor.py
+# %load plotTensor.py
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -296,3 +298,36 @@ def plotBarChart(X, numPlots, title, figsize=(5, 3)):
     
     else:
         print('Invalid dimensions')
+        
+        
+def plotTimeSlot(X, title,ax1,ax2, timePoints, timePointsY, figsize=(5, 3)):
+    tickStr = []
+    for i in range(len(timePoints)):
+        tickStr.append("%d-%d" % (timePoints[i],timePointsY[i]))
+
+    fig = plt.figure(num=None, figsize=figsize, dpi=80, facecolor='w', edgecolor='k')
+    plt.imshow(X, aspect='auto', interpolation='nearest', vmin=0)
+    plt.title(title)
+    
+    if ax1==6:
+        plt.xlabel('Time Slots')
+        plt.xticks(np.arange(len(timePoints)), tickStr)
+        if ax2==0:
+            plt.ylabel('Week')
+        elif ax2==1:
+            plt.ylabel('Day of Week')
+            plt.yticks(np.arange(7), ['Mo','Tu','We','Th','Fr','Sa','Su'])
+        elif ax2==3:
+            plt.ylabel('Items')
+    else:
+        plt.ylabel('Time Slots')
+        plt.yticks(np.arange(len(timePoints)), tickStr)
+        if ax1==0:
+            plt.xlabel('Week')
+        elif ax1==1:
+            plt.xlabel('Day of Week')
+            plt.xticks(np.arange(7), ['Mo','Tu','We','Th','Fr','Sa','Su'])
+        elif ax1==3:
+            plt.xlabel('Items')
+    
+    plt.show()

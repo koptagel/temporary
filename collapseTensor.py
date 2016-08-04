@@ -1,3 +1,4 @@
+# %load collapseTensor.py
 
 import numpy as np
 
@@ -57,3 +58,41 @@ def collapseTensor(tensor, dimensions, function):
             tensor = np.sum(tensor, axis=ax, keepdims=True)
 
     return tensor
+
+def collapseSlotTensor(tensor, ax1, ax2, timePoints, timePointsY, function):
+    dimensions = np.array([1,1,1,1,1])
+    if ax1==6:
+        dimensions[2] = 0
+        dimensions[ax2] = 0
+    if ax2==6: 
+        dimensions[ax1] = 0
+        dimensions[2] = 0
+    
+    indices = np.where(dimensions>0)[0]  
+    
+    for i in range(len(indices)):
+        ax = indices[len(indices)-i-1]  
+        tensor = np.sum(tensor, axis=ax, keepdims=False)
+
+    if ax1==3 or ax2==3:
+        tensor = tensor.T
+        
+    newMatrix = np.zeros((tensor.shape[0],1))
+    
+    for i in range(len(timePoints)):
+        asd = tensor[:,timePoints[i]:timePointsY[i]]
+        aaa = np.sum(asd,axis=1,keepdims=True)
+        newMatrix = np.hstack((newMatrix,aaa))
+
+    if ax1 > ax2:
+        newMatrix = newMatrix.T
+        
+    if ax1==6:    
+        newMatrix = newMatrix[1:,:]  
+    if ax2==6:    
+        newMatrix = newMatrix[:,1:]
+     
+    if function is 'binary':
+        newMatrix[np.where(newMatrix>0)]=1
+        
+    return newMatrix

@@ -1,4 +1,3 @@
-
 import numpy as np
 from scipy.sparse import *
 
@@ -73,6 +72,71 @@ def loadRecommendationOfCustomerMatrixFromTxt(filename, customerIndex):
     data = np.array(data)
 
     PurchaseMatrixEst = csr_matrix( (data,(row,col)), shape=(max(row)+1,max(col)+1) )
+
+    return PurchaseMatrixEst
+
+def loadRecommendationOfCustomerMatrixFromTxt2(filename, customerIndex):
+    row = []
+    col = []
+    data = []
+
+    for line in open(filename, "r"):
+        values = line.split()
+
+        customer = int(values[0])
+        if customer == customerIndex:
+            item = int(values[1])
+            amount = float(values[2])
+
+            row.append(0)
+            col.append(item)
+            data.append(amount)
+        
+        elif customer == customerIndex+1:
+            break
+
+    row = np.array(row)
+    col = np.array(col)
+    data = np.array(data)
+
+    PurchaseMatrixEst = csr_matrix( (data,(row,col)), shape=(1,7269) )
+
+    return PurchaseMatrixEst
+
+def loadRecommendationOfCustomerProfilesFromTxt(filename, customeridss, customerIds):
+    indices = []
+    for i in range(len(customerIds)):
+        idx = np.where(customeridss==customerIds[i])[0][0]
+        indices.append(idx)
+    indices = np.array(indices)
+    
+    maxIndex = np.max(indices)
+    
+    row = []
+    col = []
+    data = []
+
+    for line in open(filename, "r"):
+        values = line.split()
+
+        customer = int(values[0])
+        if customer in indices:
+            item = int(values[1])
+            amount = float(values[2])
+
+            cidx = np.where(indices==customer)[0][0]
+            row.append(cidx)
+            col.append(item)
+            data.append(amount)
+        
+        elif customer == maxIndex+1:
+            break
+
+    row = np.array(row)
+    col = np.array(col)
+    data = np.array(data)
+
+    PurchaseMatrixEst = csr_matrix( (data,(row,col)), shape=(max(row)+1,7269) )
 
     return PurchaseMatrixEst
 
