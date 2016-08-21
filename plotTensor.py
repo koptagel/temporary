@@ -1,6 +1,3 @@
-# %load plotTensor.py
-# %load plotTensor.py
-# %load plotTensor.py
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -329,5 +326,19 @@ def plotTimeSlot(X, title,ax1,ax2, timePoints, timePointsY, figsize=(5, 3)):
             plt.xticks(np.arange(7), ['Mo','Tu','We','Th','Fr','Sa','Su'])
         elif ax1==3:
             plt.xlabel('Items')
+    
+    plt.show()
+    
+def plotTimeSlotBarChart(X, title, timePoints, timePointsY, figsize=(5, 3)):
+    tickStr = []
+    for i in range(len(timePoints)):
+        tickStr.append("%d-%d" % (timePoints[i],timePointsY[i]))
+
+    fig = plt.figure(num=None, figsize=figsize, dpi=80, facecolor='w', edgecolor='k')
+    plt.title(title)
+    
+    plt.bar(np.arange(len(tickStr)), X)
+    plt.xlabel('Time Slots')
+    plt.xticks(np.arange(len(timePoints)), tickStr)
     
     plt.show()

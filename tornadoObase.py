@@ -29,6 +29,7 @@ from plotTensor import plotTensor
 from plotTensor import plotTensorTr
 from plotTensor import plotBarChart
 from plotTensor import plotTimeSlot
+from plotTensor import plotTimeSlotBarChart
 from NMF import nmfFixBasis
 from NMF import nmf
 from distance import distance
@@ -141,16 +142,15 @@ class MainPage(tornado.web.RequestHandler):
         
     def post(self):
         self.write('<html><head><h1> Obase Tornado Server </h1></head>'
-                   '<body> Son Guncelleme: 05.08.2016 04:00 <br><br>'
+                   '<body> Son Guncelleme: 21.08.2016 20:00 <br><br>'
+                   '* customerSalesMap fonksiyonunda artik her iki eksene de saat araligi verilebiliyor. <br>'
+                   '* similarCustomers fonksiyonu su anda her iki eksene de saat araligi verilecek sekilde calismiyor. Onumuzdeki gunlerde metod guncellenecek. <br><br>'
                    '* recommendProducts2 fonksiyonundaki problem giderildi. <br>'
                    '* similarCustomers fonksiyonu musteri profilleri icin urun dondurecek sekilde guncellendi. Fonksiyona yeni parametreler eklendi. <br>'
                    '* similarCustomers fonksiyonu artik distance, minimum ve maksimum distance ve toplam musteri sayisi degerlerini de donduruyor. <br>'
                    '* similarCustomers fonksiyonundaki benzerlik yuzdesinin hesaplanisi, fonksiyonun aciklama kismina eklendi. <br>'
                    '* similarCustomers fonksiyonu, saat araliklari alacak sekilde guncellendi. Su anda bir eksen saat araligi iken, diger eksen hafta, haftanin gunu veya urun olacak sekilde calisiyor.<br>'
                    '* customerSalesMap fonksiyonu, saat araliklari alacak sekilde guncellendi. Su anda bir eksen saat araligi iken, diger eksen hafta, haftanin gunu veya urun olacak sekilde calisiyor.<br><br>'
-                   '* recommendProducts2 fonksiyonu eklendi. IdUrun degerleri oneriyor. <br>'
-                   '* recommendProducts fonksiyonu eklendi. Su anda IdUrunGrup3 degerleri oneriyor. <br>'
-                   '* Bu fonksiyonlarda goze carpan birkac ufak problem var. En kisa surede duzeltilecekler <br><br>'
                    '<h2> Dataset Bilgileri </h2>'
                    'Ilk Alisveris Tarihi: 05.01.2015 00:00 <br>'
                    'Son Alisveris Tarihi: 16.05.2016 15:00 <br>'
@@ -429,27 +429,52 @@ class CustomerSalesMap(tornado.web.RequestHandler):
                 self.write("%s" % info)
             
             elif ax1==6 or ax2==6:
+                if ax1 != ax2:
+                    slots = plot_data['slots']
+                    timePoints = []
+                    timePointsY = []
+                    for i in range(len(slots)):
+                        timePoints.append(int(slots[i]["x"]))
+                        timePointsY.append(int(slots[i]["y"]))
 
-                slots = plot_data['slots']
-                timePoints = []
-                timePointsY = []
-                for i in range(len(slots)):
-                    timePoints.append(int(slots[i]["x"]))
-                    timePointsY.append(int(slots[i]["y"]))
-                
-    
-                X = loadFundamentalTensorCustomer('files/Etailer_AllHours_Item_Customer_Tensor_%d.mat'%CUSTOMERCOUNT, customerIndex, 24)
-                newMatrix = collapseSlotTensor(X, ax1, ax2, timePoints, timePointsY, plotCriteria)
-                
-                plt.figure
-                plotTitle = "Sales of Customer %d" % customerId
-                plotTimeSlot(newMatrix.T, plotTitle,ax1,ax2, timePoints, timePointsY, figsize=(8, 6))
-                plt.savefig('./files/%d_%d_%d_%d.png' % (customerId,ax1,ax2,criteria))
-                imageUrl = ("45.55.237.86:%s/files/%d_%d_%d_%d.png" % (PORT,customerId,ax1,ax2,criteria))
 
-                info = json.dumps({"image_url": imageUrl})
-                self.write("%s" % info)
-            
+                    X = loadFundamentalTensorCustomer('files/Etailer_AllHours_Item_Customer_Tensor_%d.mat'%CUSTOMERCOUNT, customerIndex, 24)
+                    newMatrix = collapseSlotTensor(X, ax1, ax2, timePoints, timePointsY, plotCriteria)
+
+                    plt.figure
+                    plotTitle = "Sales of Customer %d" % customerId
+                    plotTimeSlot(newMatrix.T, plotTitle,ax1,ax2, timePoints, timePointsY, figsize=(8, 6))
+                    plt.savefig('./files/%d_%d_%d_%d.png' % (customerId,ax1,ax2,criteria))
+                    imageUrl = ("45.55.237.86:%s/files/%d_%d_%d_%d.png" % (PORT,customerId,ax1,ax2,criteria))
+
+                    info = json.dumps({"image_url": imageUrl})
+                    self.write("%s" % info)
+                else:
+                    slots = plot_data['slots']
+                    timePoints = []
+                    timePointsY = []
+                    for i in range(len(slots)):
+                        timePoints.append(int(slots[i]["x"]))
+                        timePointsY.append(int(slots[i]["y"]))
+
+
+                    X = loadFundamentalTensorCustomer('files/Etailer_AllHours_Item_Customer_Tensor_%d.mat'%CUSTOMERCOUNT, customerIndex, 24)
+                    newMatrix = collapseSlotTensor(X, 1, ax2, timePoints, timePointsY, plotCriteria)
+                    newMatrix = np.sum(newMatrix, axis=0, keepdims=False)
+                    if plotCriteria == 'binary':
+                        newMatrix[np.where(newMatrix>0)]=1
+                        
+                    plt.figure
+                    plotTitle = "Sales of Customer %d" % customerId
+                    plotTimeSlotBarChart(newMatrix, plotTitle, timePoints, timePointsY, figsize=(8, 6))
+                    plt.savefig('./files/%d_%d_%d_%d.png' % (customerId,ax1,ax2,criteria))
+                    imageUrl = ("45.55.237.86:%s/files/%d_%d_%d_%d.png" % (PORT,customerId,ax1,ax2,criteria))
+
+                    info = json.dumps({"image_url": imageUrl})
+                    self.write("%s" % info)
+                    
+                    print("****")
+                    print(newMatrix.shape)
                 
             else:
             
@@ -682,6 +707,65 @@ class similarCustomers(tornado.web.RequestHandler):
                 global tempRes
                 tempRes = distances
             
+            elif ax1 == 6 and ax2 == 6:
+                print("*** ax1 ax2 6")
+                
+                slots = similar_data['slots']
+                timePoints = []
+                timePointsY = []
+                for i in range(len(slots)):
+                    timePoints.append(int(slots[i]["x"]))
+                    timePointsY.append(int(slots[i]["y"]))
+
+                filename = 'files/dhc_%d.mat'%CUSTOMERCOUNT
+                X = loadViewCustomer(filename,customerIndex)
+                #X = loadFundamentalTensorCustomer('files/Etailer_AllHours_Item_Customer_Tensor_%d.mat'%CUSTOMERCOUNT, customerIndex, 24)
+                X = collapseSlotTensor(X, 1, ax2, timePoints, timePointsY, plotCriteria)
+                X = np.sum(X, axis=0, keepdims=True)
+                if plotCriteria == 'binary':
+                    X[np.where(X>0)]=1  
+                    
+                print("x shape")
+                print(X.shape)
+                    
+                if searchType == 0:
+                    profileCustCount = CUSTOMERCOUNT
+                    custIndexList = np.arange(CUSTOMERCOUNT)
+                    
+                else:
+                    profileId = similar_data['ProfileId']
+                    profileDs = similar_data['ProfileDs']
+                    
+                    filename2 = "files/profileFiles/ProfileCustomers_%s_%d.txt" % (profileDs, profileId)
+
+                    json_data=open(filename2).read()
+                    customersData = json.loads(json_data)
+
+                    profileCustCount = 150
+                    profileCustomers = customersData[0:profileCustCount]
+
+                    #customerIdsList = []
+                    custIndexList = []
+                    for cust in profileCustomers:
+                        #customerIdsList.append(cust['id'])
+                        custIndexList.append(np.where(EtailerSelectedCustomerIndex2Id==cust['id'])[0][0])
+                    custIndexList = np.array(custIndexList)
+                 
+                distances = np.zeros(len(custIndexList))
+                for i in range(len(custIndexList)):
+                    filename = 'files/dhc_%d.mat'%CUSTOMERCOUNT
+                    cust = loadViewCustomer(filename,custIndexList[i])
+                    #cust = loadFundamentalTensorCustomer('files/Etailer_AllHours_Item_Customer_Tensor_%d.mat'%CUSTOMERCOUNT, custIndexList[i], 24)
+                    cust = collapseSlotTensor(cust, 1, ax2, timePoints, timePointsY, plotCriteria)
+                    cust = np.sum(X, axis=0, keepdims=True)
+                    if plotCriteria == 'binary':
+                        cust[np.where(cust>0)]=1  
+
+                    distances[i] = distance(X, cust, metric)
+                    #cust = loadViewCustomer(filename,custIndexList[i])
+                    #cust = collapseSlotTensor(cust, ax1, ax2, timePoints, timePointsY, plotCriteria)
+                    
+            
             elif ax1 == 6 or ax2 == 6:
                 slots = similar_data['slots']
                 timePoints = []
@@ -704,7 +788,7 @@ class similarCustomers(tornado.web.RequestHandler):
                     filename = 'files/dhc_%d.mat'%CUSTOMERCOUNT
                 else:
                     filename = 'files/hic_%d.mat'%CUSTOMERCOUNT
-                
+               
                 X = loadViewCustomer(filename,customerIndex)
                 X = collapseSlotTensor(X, ax1, ax2, timePoints, timePointsY, plotCriteria)
     
