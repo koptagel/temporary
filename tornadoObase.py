@@ -46,7 +46,7 @@ from TxtFileFuncs import loadRecommendationOfCustomerMatrixFromTxt2
 from TxtFileFuncs import loadRecommendationOfCustomerProfilesFromTxt
 
 # Setting host name, port number, directory name and the static path. 
-HOST = '0.0.0.0'
+HOST = '212.57.2.68'
 PORT = 8086
 
 CUSTOMERCOUNT = 3193
