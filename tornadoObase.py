@@ -490,9 +490,9 @@ class CustomerSalesMap(tornado.web.RequestHandler):
                     webBrowseGraph(customerId,distances)
                     
                     if ax1 == 4:
-                        imageUrl = ("45.55.237.86:%s/files/%d_webmatrix.png" % (PORT,customerId))
+                        imageUrl = (HOST+":%s/files/%d_webmatrix.png" % (PORT,customerId))
                     elif ax1 == 5:
-                        imageUrl = ("45.55.237.86:%s/files/%d_webgraph.png" % (PORT,customerId))
+                        imageUrl = (HOST+":%s/files/%d_webgraph.png" % (PORT,customerId))
 
                     info = json.dumps({"image_url": imageUrl})
                     self.write("%s" % info)
