@@ -160,7 +160,7 @@ class MainPage(tornado.web.RequestHandler):
                    'Gecerli Urun Grup3 Sayisi: 180 <br><br>'
                    'recommendProducts2 fonksiyonu daha farkli bir dataset kullaniyor. <br>'
                    '<h2> Genel Kullanim </h2>'
-                   '45.55.237.86:8880/<b>FonksiyonIsmi</b>?jsonData=<b>JsonInputu</b> <br><br>'
+                   '{SERVER_IP}:{PORT}/<b>FonksiyonIsmi</b>?jsonData=<b>JsonInputu</b> <br><br>'
                    'Asagida listelenen butun fonksiyonlarda veriler Json formatinda alinip, sonuclar Json formatinda geri dondurulecektir. <br>'
                    '<b>FonksiyonIsmi</b> yazan yere asagida siralanan fonksiyonlardan birinin adinin yazilmasi gerekiyor. <br>'
                    '<b>JsonInputu</b> yazan kisma ise verilerin Json formatinda girilmesi gerekiyor. <br><br>'
@@ -174,7 +174,7 @@ class MainPage(tornado.web.RequestHandler):
                    'Count parametresi ise listelenecek maksimum musteri sayisini belirtiyor. <br>'
                    'ProfileId ve ProfileDs inputları profilin id numarasını ve ismini ifade etmek için gerekiyor. Bu id ve isim daha sonra similarCustomers fonksiyonunda kullanılacak. <br>'
                    'Musteriler, profile uygunluklarina gore siralanmistir (yuksek yuzdeden dusuk yuzdeye gore). <br><br>'
-                   '<b> Input: </b> 45.55.237.86:8880/<b>customersOfProfile</b>?jsonData=<b>{"Count":5, "MinPercentage":60, "ProfileId": 11, "ProfileDs": "Bebek", "Products": [{"id": 9556}, {"id": 34398}, {"id": 5974}]}</b> <br>'
+                   '<b> Input: </b> {SERVER_IP}:{PORT}/<b>customersOfProfile</b>?jsonData=<b>{"Count":5, "MinPercentage":60, "ProfileId": 11, "ProfileDs": "Bebek", "Products": [{"id": 9556}, {"id": 34398}, {"id": 5974}]}</b> <br>'
                    '<b> Output: </b> {"Customers": [{"percentage":98, "id": 90361}, {"percentage":80, "id": 90412}, {"percentage":77, "id": 1073258}]} <br>'
                    'Bu ornekte, verilen urunlere uyan, profil uygunlugu %60in uzerinde olan maksimum 5 musteri listeleniyor. <br>'
                    'Profile uyan müsterilerin bilgileri, daha sonra kullanılmak için arka planda kaydediliyor. <br><br>'
@@ -195,8 +195,8 @@ class MainPage(tornado.web.RequestHandler):
                    'Musterilerin web aktivitelerinin grafiklerinin de xAxis ve yAxis degerlerinin ayni sayi olmasi gerekiyor. <br>'
                    'Saat araliklarina bakilabilmesi icin input olarak slots parametresi de verilmesi gerekiyor. <br>'
                    'Saat araligi belirlerken istenilen sayida aralik boyutu belirlenebiliyor. <br><br>'
-                   '<b> Input: </b> 45.55.237.86:8880/<b>customerSalesMap</b>?jsonData=<b>{"id": 90412, "xAxis":0, "yAxis": 6, "type": 1, "slots": [{"x":0,"y":8},{"x":10,"y":20},{"x":20,"y":24}]} </b><br>'
-                   '<b> Output: </b> {"image_url": "45.55.237.86:8880/files/90412_0_6_1.png"} <br>'
+                   '<b> Input: </b> {SERVER_IP}:{PORT}/<b>customerSalesMap</b>?jsonData=<b>{"id": 90412, "xAxis":0, "yAxis": 6, "type": 1, "slots": [{"x":0,"y":8},{"x":10,"y":20},{"x":20,"y":24}]} </b><br>'
+                   '<b> Output: </b> {"image_url": "{SERVER_IP}:{PORT}/files/90412_0_6_1.png"} <br>'
                    'Bu ornekte 90412 numarali musterinin haftalara ve saat araliklarina ([0,8),[10,20),[20,24)) gore yaptigi toplam harcama gosterilmektedir. <br><br>'
                    'Ornek olarak kullanilabilecek musteri idleri: 1073258, 999538, 1155093. <br><br>'
                    '<h3> similarCustomers </h3>'
@@ -220,7 +220,7 @@ class MainPage(tornado.web.RequestHandler):
                    'productCount parametresi, musterilere onerilen ilk kac urunu goz onunde bulunduracagimizi belirtiyor. <br><br>'
                    'baseCount ve productCount parametrelerine verilen degerlere gore fonksiyonun calisma suresinde farkliliklar oluyor. <br><br>'
                    'Musterilerin benzerlik yuzdesi bu formulle hesaplaniyor; percentage = 100 - (100 * distance / maxDistance) <br><br>'
-                   '<b> Input: </b> 45.55.237.86:8880/<b>similarCustomers</b>?jsonData=<b>{"id": 1279930, "xAxis":0, "yAxis": 6, "type": 2, "distanceType": 0, "Count":5, "MinPercentage":60, "productCount": 10, "baseCount": 50, "searchType": 1, "ProfileId": 11, "ProfileDs": "Bebek", "slots": [{"x":0,"y":8},{"x":10,"y":20},{"x":20,"y":24}]} </b><br>' 
+                   '<b> Input: </b> {SERVER_IP}:{PORT}/<b>similarCustomers</b>?jsonData=<b>{"id": 1279930, "xAxis":0, "yAxis": 6, "type": 2, "distanceType": 0, "Count":5, "MinPercentage":60, "productCount": 10, "baseCount": 50, "searchType": 1, "ProfileId": 11, "ProfileDs": "Bebek", "slots": [{"x":0,"y":8},{"x":10,"y":20},{"x":20,"y":24}]} </b><br>'
                    '<b> Output: </b> {"Customers": [{"distances": 0, "percentage": 100, "id": 1279930}, {"distances": 35, "percentage": 72, "id": 1406410}, {"distances": 42, "percentage": 66, "id": 1058305}, {"distances": 42, "percentage": 66, "id": 1366933}, {"distances": 44, "percentage": 65, "id": 91248}], "Products": [{"id": 12680, "percentage": 62}, {"id": 12667, "percentage": 48}, {"id": 20083, "percentage": 48}, {"id": 12700, "percentage": 46}, {"id": 12677, "percentage": 46}, {"id": 12719, "percentage": 44}, {"id": 12678, "percentage": 38}, {"id": 10981, "percentage": 36}, {"id": 12689, "percentage": 32}, {"id": 12668, "percentage": 27}], "MinDistance": 0, "MaxDistance": 128} <br>'
                    'Bu ornekte 1279930 numarali musterinin alim aliskanligina (haftalara ve saat araliklarina gore, alisveris yapip yapmadigi) en cok benzerlik gosteren, profil uygunlugu %60in uzerinde olan maksimum 5 musteri listeleniyor.'
                    'Bu müşteriler, 11 numaralı Bebek profilindeki müşterilerden seçiliyor. <br><br>'
@@ -234,8 +234,8 @@ class MainPage(tornado.web.RequestHandler):
                    'Ornek olarak kullanilabilecek musteri idleri: 1073258, 999538, 1155093. <br><br>'
                    '<h3> customerWeblog </h3>'
                    'Verilen musteri idsine gore, webdeki hareket grafiklerinin url bilgisi dondurulur. <br><br>'
-                   '<b> Input: </b> 45.55.237.86:8880/<b>customerWeblog</b>?jsonData=<b>{"id": 90412} </b><br>'
-                   '<b> Output: </b> {"image_url": "45.55.237.86:8880/files/90412_webmatrix.png","image_url_graph": "45.55.237.86:8880/files/90412_webgraph.png"} <br>'
+                   '<b> Input: </b> {SERVER_IP}:{PORT}/<b>customerWeblog</b>?jsonData=<b>{"id": 90412} </b><br>'
+                   '<b> Output: </b> {"image_url": "{SERVER_IP}:{PORT}/files/90412_webmatrix.png","image_url_graph": "{SERVER_IP}:{PORT}/files/90412_webgraph.png"} <br>'
                    'Ornek olarak kullanilabilecek musteri idleri: 1073258, 999538. <br><br>'
                    '<h3> recommendProducts </h3>'
                    'Verilen musteri idsi, tavsiye tipi ve sayiya gore onerilen urunlerin idleri dondurulur. <br>'
@@ -246,7 +246,7 @@ class MainPage(tornado.web.RequestHandler):
                    '<tr><td> discover </td><td> Yalnizca henuz alinmamis ama alinma ihtimali yuksek urunler listelenir </td></tr><br>'
                    '<tr><td> habit </td><td> Yalnizca simdiye kadar alinan urunler listelenir </td></tr><br>'
                    '</table><br>'
-                   '<b> Input: </b> 45.55.237.86:8880/<b>recommendProducts</b>?jsonData=<b>{"id": 737293, "type": "mix", "Count":5} </b><br>'
+                   '<b> Input: </b> {SERVER_IP}:{PORT}/<b>recommendProducts</b>?jsonData=<b>{"id": 737293, "type": "mix", "Count":5} </b><br>'
                    '<b> Output: </b> {"Products": [{"id": 597}, {"id": 454}, {"id": 457}, {"id": 553}, {"id": 636}]} <br>'
                    'Bu ornekte 737293 numarali musteri icin maksimum 5 tane urun oneriliyor. Urun listesi musterinin hem simdiye kadar aldigi hem de henuz almadigi fakat alma ihtimali yuksek urunlerden olusuyor. <br><br>'
                    '<h3> recommendProducts2 </h3>'
@@ -260,10 +260,10 @@ class MainPage(tornado.web.RequestHandler):
                    '<tr><td> discover </td><td> Yalnizca henuz alinmamis ama alinma ihtimali yuksek urunler listelenir </td></tr><br>'
                    '<tr><td> habit </td><td> Yalnizca simdiye kadar alinan urunler listelenir </td></tr><br>'
                    '</table><br>'
-                   '<b> Input: </b> 45.55.237.86:8880/<b>recommendProducts2</b>?jsonData=<b>{"id": 737293, "type": "mix", "Count":5} </b><br>'
+                   '<b> Input: </b> {SERVER_IP}:{PORT}/<b>recommendProducts2</b>?jsonData=<b>{"id": 737293, "type": "mix", "Count":5} </b><br>'
                    '<b> Output: </b> {"Products": [{"id": 32823}, {"id": 18110}, {"id": 18109}, {"id": 1808}, {"id": 18107}]} <br>'
                    'Bu ornekte 737293 numarali musteri icin maksimum 5 tane urun oneriliyor. Urun listesi musterinin hem simdiye kadar aldigi hem de henuz almadigi fakat alma ihtimali yuksek urunlerden olusuyor. <br><br>'
-                   '</body></html>')
+                   '</body></html>'.format(SERVER_IP=HOST, PORT=PORT))
     
 
 class DefineProfile(tornado.web.RequestHandler):
@@ -423,7 +423,7 @@ class CustomerSalesMap(tornado.web.RequestHandler):
                     plotTensorTr(X, numPlots=1, title=plotTitle, figsize=(8, 6))
                 plt.savefig('./files/%d_%d_%d_%d.png' % (customerId,ax1,ax2,criteria))
 
-                imageUrl = ("45.55.237.86:%s/files/%d_%d_%d_%d.png" % (PORT,customerId,ax1,ax2,criteria))
+                imageUrl = (HOST+":%s/files/%d_%d_%d_%d.png" % (PORT,customerId,ax1,ax2,criteria))
 
                 info = json.dumps({"image_url": imageUrl})
                 self.write("%s" % info)
@@ -445,7 +445,7 @@ class CustomerSalesMap(tornado.web.RequestHandler):
                     plotTitle = "Sales of Customer %d" % customerId
                     plotTimeSlot(newMatrix.T, plotTitle,ax1,ax2, timePoints, timePointsY, figsize=(8, 6))
                     plt.savefig('./files/%d_%d_%d_%d.png' % (customerId,ax1,ax2,criteria))
-                    imageUrl = ("45.55.237.86:%s/files/%d_%d_%d_%d.png" % (PORT,customerId,ax1,ax2,criteria))
+                    imageUrl = (HOST+":%s/files/%d_%d_%d_%d.png" % (PORT,customerId,ax1,ax2,criteria))
 
                     info = json.dumps({"image_url": imageUrl})
                     self.write("%s" % info)
@@ -468,7 +468,7 @@ class CustomerSalesMap(tornado.web.RequestHandler):
                     plotTitle = "Sales of Customer %d" % customerId
                     plotTimeSlotBarChart(newMatrix, plotTitle, timePoints, timePointsY, figsize=(8, 6))
                     plt.savefig('./files/%d_%d_%d_%d.png' % (customerId,ax1,ax2,criteria))
-                    imageUrl = ("45.55.237.86:%s/files/%d_%d_%d_%d.png" % (PORT,customerId,ax1,ax2,criteria))
+                    imageUrl = (HOST+":%s/files/%d_%d_%d_%d.png" % (PORT,customerId,ax1,ax2,criteria))
 
                     info = json.dumps({"image_url": imageUrl})
                     self.write("%s" % info)
@@ -519,8 +519,8 @@ class CustomerWeblogPlots(tornado.web.RequestHandler):
         else:
             webBrowseGraph(customerId,distances)
 
-            matrixUrl = ("45.55.237.86:%s/files/%d_webmatrix.png" % (PORT,customerId))
-            graphUrl = ("45.55.237.86:%s/files/%d_webgraph.png" % (PORT,customerId))
+            matrixUrl = (HOST+":%s/files/%d_webmatrix.png" % (PORT,customerId))
+            graphUrl = (HOST+":%s/files/%d_webgraph.png" % (PORT,customerId))
 
             info = json.dumps({"image_url": matrixUrl, "image_url_graph": graphUrl})
             self.write("%s" % info)
