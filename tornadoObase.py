@@ -195,8 +195,8 @@ class MainPage(tornado.web.RequestHandler):
                    'Musterilerin web aktivitelerinin grafiklerinin de xAxis ve yAxis degerlerinin ayni sayi olmasi gerekiyor. <br>'
                    'Saat araliklarina bakilabilmesi icin input olarak slots parametresi de verilmesi gerekiyor. <br>'
                    'Saat araligi belirlerken istenilen sayida aralik boyutu belirlenebiliyor. <br><br>'
-                   '<b> Input: </b> {SERVER_IP}:{PORT}/<b>customerSalesMap</b>?jsonData=<b>{{"id": 90412, "xAxis":0, "yAxis": 6, "type": 1, "slots": [{{"x":0,"y":8}},{{"x":10,"y":20}},{{"x":20,"y":24}}]}} </b><br>'
-                   '<b> Output: </b> {{"image_url": "{SERVER_IP}:{PORT}/files/90412_0_6_1.png"}} <br>'
+                   '<b> Input: </b> {SERVER_IP}:{PORT}/<b>customerSalesMap</b>?jsonData=<b>{{"id": 90412, "xAxis":0, "yAxis": 6, "type": 1, "slots": [{{"x":0,"y":10}},{{"x":10,"y":20}},{{"x":20,"y":24}}]}} </b><br>'
+                   '<b> Output: </b> {{"image_url": "/files/90412_0_6_1.png"}} <br>'
                    'Bu ornekte 90412 numarali musterinin haftalara ve saat araliklarina ([0,8),[10,20),[20,24)) gore yaptigi toplam harcama gosterilmektedir. <br><br>'
                    'Ornek olarak kullanilabilecek musteri idleri: 1073258, 999538, 1155093. <br><br>'
                    '<h3> similarCustomers </h3>'
@@ -423,7 +423,7 @@ class CustomerSalesMap(tornado.web.RequestHandler):
                     plotTensorTr(X, numPlots=1, title=plotTitle, figsize=(8, 6))
                 plt.savefig('./files/%d_%d_%d_%d.png' % (customerId,ax1,ax2,criteria))
 
-                imageUrl = (HOST+":%s/files/%d_%d_%d_%d.png" % (PORT,customerId,ax1,ax2,criteria))
+                imageUrl = ("/files/%d_%d_%d_%d.png" % (customerId,ax1,ax2,criteria))
 
                 info = json.dumps({"image_url": imageUrl})
                 self.write("%s" % info)
@@ -445,7 +445,7 @@ class CustomerSalesMap(tornado.web.RequestHandler):
                     plotTitle = "Sales of Customer %d" % customerId
                     plotTimeSlot(newMatrix.T, plotTitle,ax1,ax2, timePoints, timePointsY, figsize=(8, 6))
                     plt.savefig('./files/%d_%d_%d_%d.png' % (customerId,ax1,ax2,criteria))
-                    imageUrl = (HOST+":%s/files/%d_%d_%d_%d.png" % (PORT,customerId,ax1,ax2,criteria))
+                    imageUrl = ("/files/%d_%d_%d_%d.png" % (customerId,ax1,ax2,criteria))
 
                     info = json.dumps({"image_url": imageUrl})
                     self.write("%s" % info)
@@ -468,7 +468,7 @@ class CustomerSalesMap(tornado.web.RequestHandler):
                     plotTitle = "Sales of Customer %d" % customerId
                     plotTimeSlotBarChart(newMatrix, plotTitle, timePoints, timePointsY, figsize=(8, 6))
                     plt.savefig('./files/%d_%d_%d_%d.png' % (customerId,ax1,ax2,criteria))
-                    imageUrl = (HOST+":%s/files/%d_%d_%d_%d.png" % (PORT,customerId,ax1,ax2,criteria))
+                    imageUrl = ("/files/%d_%d_%d_%d.png" % (PORT,customerId,ax1,ax2,criteria))
 
                     info = json.dumps({"image_url": imageUrl})
                     self.write("%s" % info)
@@ -490,9 +490,9 @@ class CustomerSalesMap(tornado.web.RequestHandler):
                     webBrowseGraph(customerId,distances)
                     
                     if ax1 == 4:
-                        imageUrl = (HOST+":%s/files/%d_webmatrix.png" % (PORT,customerId))
+                        imageUrl = ("/files/%d_webmatrix.png" % (PORT,customerId))
                     elif ax1 == 5:
-                        imageUrl = (HOST+":%s/files/%d_webgraph.png" % (PORT,customerId))
+                        imageUrl = ("/files/%d_webgraph.png" % (PORT,customerId))
 
                     info = json.dumps({"image_url": imageUrl})
                     self.write("%s" % info)
