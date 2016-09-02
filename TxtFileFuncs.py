@@ -1,5 +1,6 @@
 import numpy as np
 from scipy.sparse import *
+import sqlite3
 
 def loadMatrixFromTxt(filename):
     row = []
@@ -74,6 +75,34 @@ def loadRecommendationOfCustomerMatrixFromTxt(filename, customerIndex):
     PurchaseMatrixEst = csr_matrix( (data,(row,col)), shape=(max(row)+1,max(col)+1) )
 
     return PurchaseMatrixEst
+
+def loadRecommendationOfCustomerMatrixFromSql(db_name, customerIndex):
+    conn = sqlite3.connect(db_name)
+
+    c = conn.cursor()
+
+    c.execute("SELECT ProductID,Estimation from ratings where CustomerID=? order by Estimation", (customerIndex,))
+
+    row = []
+    col = []
+    data = []
+
+    for values in c:
+        item = int(values[0])
+        amount = float(values[1])
+        row.append(0)
+        col.append(item)
+        data.append(amount)
+
+    row = np.array(row)
+    col = np.array(col)
+    data = np.array(data)
+
+    conn.close()
+
+    PurchaseMatrixEst = csr_matrix((data, (row, col)), shape=(1, 7269))
+    return PurchaseMatrixEst
+
 
 def loadRecommendationOfCustomerMatrixFromTxt2(filename, customerIndex):
     row = []

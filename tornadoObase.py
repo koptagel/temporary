@@ -43,6 +43,7 @@ from TxtFileFuncs import loadItemIdAndDsFromTxt
 from TxtFileFuncs import loadCustomerIdFromTxt
 from TxtFileFuncs import loadRecommendationOfCustomerMatrixFromTxt
 from TxtFileFuncs import loadRecommendationOfCustomerMatrixFromTxt2
+from TxtFileFuncs import loadRecommendationOfCustomerMatrixFromSql
 from TxtFileFuncs import loadRecommendationOfCustomerProfilesFromTxt
 
 # Setting host name, port number, directory name and the static path. 
@@ -1080,8 +1081,11 @@ class RecommendProducts2(tornado.web.RequestHandler):
         customerIndex = np.where(customeridss==customerId)[0][0] 
         customerSales = PurchaseMatrix[customerIndex,:].toarray()
         
-        filename = "files/1_1_1_7269_3392_TensorEst.txt"
-        customerSalesEst = loadRecommendationOfCustomerMatrixFromTxt2(filename, customerIndex).toarray()
+        #filename = "files/1_1_1_7269_3392_TensorEst.txt"
+        #customerSalesEst = loadRecommendationOfCustomerMatrixFromTxt2(filename, customerIndex).toarray()
+        db_name = 'files/Estimates.db'
+        #print(customerIndex)
+        customerSalesEst = loadRecommendationOfCustomerMatrixFromSql(db_name, customerIndex).toarray()
 
         #customerSalesEst = PurchaseMatrixEst[customerIndex,:]
             
