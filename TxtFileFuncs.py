@@ -81,7 +81,7 @@ def loadRecommendationOfCustomerMatrixFromSql(db_name, customerIndex):
 
     c = conn.cursor()
 
-    c.execute("SELECT ProductID,Estimation from ratings where CustomerID=? order by Estimation", (customerIndex,))
+    c.execute("SELECT ProductID,Estimation from ratings where CustomerID=? order by Estimation", (str(customerIndex),))
 
     row = []
     col = []
